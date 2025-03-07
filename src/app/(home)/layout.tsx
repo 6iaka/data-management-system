@@ -12,7 +12,7 @@ export default function HomeLayout({
       <AppSidebar />
       <AIModal />
 
-      <main className="flex w-full flex-col">
+      <main className="flex min-h-svh w-full flex-col">
         <header className="flex w-full gap-4 border-b p-4">
           <TooltipWrapper label="Toggle Sidebar">
             <SidebarTrigger className="size-9 shrink-0" />
@@ -21,7 +21,7 @@ export default function HomeLayout({
           <Input placeholder="Search" className="flex-1" />
         </header>
 
-        <div>{children}</div>
+        <div className="flex flex-1 flex-col">{children}</div>
       </main>
     </SidebarProvider>
   );

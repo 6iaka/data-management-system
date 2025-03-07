@@ -1,17 +1,17 @@
 import { Table } from "lucide-react";
 import { notFound } from "next/navigation";
+import React from "react";
 import FileCard from "~/components/FileCard";
 import FolderCard from "~/components/FolderCard";
-import CreateFolderForm from "~/components/forms/CreateFolderForm";
 import TooltipWrapper from "~/components/TooltipWrapper";
-import { Button } from "~/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "~/components/ui/dialog";
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbSeparator,
+} from "~/components/ui/breadcrumb";
+import { Button } from "~/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -19,16 +19,48 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
-import { getRootData } from "~/server/actions/drive_action";
+import driveService from "~/server/services/drive_service";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "~/components/ui/dialog";
+import CreateFolderForm from "~/components/forms/CreateFolderForm";
 
-const HomePage = async () => {
-  const data = await getRootData();
+type Props = {
+  params: Promise<{ id: string }>;
+};
+
+const FolderPage = async ({ params }: Props) => {
+  const id = (await params).id;
+  const data = await driveService.getFolderDetails(id);
   if (!data) notFound();
 
   return (
     <main className="flex flex-col gap-4 p-4">
-      <header className="flex items-center justify-between gap-4">
-        <h2 className="text-xl font-bold">Root Folder</h2>
+      <header className="flex items-center justify-between gap-2">
+        <div>
+          <h2 className="text-xl font-bold">{data.folder.title} Folder</h2>
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink href={`/`}>Root</BreadcrumbLink>
+              </BreadcrumbItem>
+              {data.parents.map((item) => (
+                <React.Fragment key={item.id}>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem>
+                    <BreadcrumbLink href={`/folder/${item.id}`}>
+                      {item.title}
+                    </BreadcrumbLink>
+                  </BreadcrumbItem>
+                </React.Fragment>
+              ))}
+            </BreadcrumbList>
+          </Breadcrumb>
+        </div>
 
         <div className="flex gap-2">
           <Button size={"sm"}>Add File</Button>
@@ -44,7 +76,7 @@ const HomePage = async () => {
                 <DialogTitle>Create a new folder</DialogTitle>
               </DialogHeader>
 
-              <CreateFolderForm />
+              <CreateFolderForm parentId={id} />
             </DialogContent>
           </Dialog>
         </div>
@@ -66,7 +98,6 @@ const HomePage = async () => {
       <section className="flex flex-col gap-2 rounded-lg">
         <header className="flex items-center justify-between">
           <h3 className="text-balance font-medium">Files</h3>
-
           <div className="flex gap-2">
             <Select>
               <SelectTrigger className="w-[180px]">
@@ -99,4 +130,4 @@ const HomePage = async () => {
   );
 };
 
-export default HomePage;
+export default FolderPage;

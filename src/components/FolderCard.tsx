@@ -3,11 +3,12 @@ import { Card } from "./ui/card";
 
 type Props = {
   name?: string | null;
+  id?: string | null;
 };
 
-const FolderCard = ({ name }: Props) => {
+const FolderCard = ({ name, id }: Props) => {
   return (
-    <Link href={"/"} title={`Ressources Folder`}>
+    <Link href={`/folder/${id}`} title={`${name} Folder`}>
       <Card className="group flex min-w-[200px] items-center justify-between gap-2 p-2.5 transition-all hover:bg-secondary">
         <div>
           <svg

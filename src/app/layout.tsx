@@ -2,6 +2,7 @@ import "~/styles/globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Karla as FontSans } from "next/font/google";
 import { type Metadata } from "next";
+import NextTopLoader from "nextjs-toploader";
 
 export const metadata: Metadata = {
   title: "Create T3 App",
@@ -25,7 +26,10 @@ export default function RootLayout({
         lang="en"
         className={`${fontSans.variable} --font-karla dark w-screen overflow-x-hidden`}
       >
-        <body>{children}</body>
+        <body>
+          <NextTopLoader />
+          {children}
+        </body>
       </html>
     </ClerkProvider>
   );
