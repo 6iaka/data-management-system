@@ -1,6 +1,6 @@
 import "~/styles/globals.css";
-
-import { GeistSans } from "geist/font/sans";
+import { ClerkProvider } from "@clerk/nextjs";
+import { Karla as FontSans } from "next/font/google";
 import { type Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -9,12 +9,21 @@ export const metadata: Metadata = {
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 
+const fontSans = FontSans({
+  weight: ["200", "300", "400", "500", "600", "700", "800"],
+  style: "normal",
+  variable: "--font-karla",
+  subsets: ["latin"],
+});
+
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${GeistSans.variable}`}>
-      <body>{children}</body>
-    </html>
+    <ClerkProvider>
+      <html lang="en" className={`${fontSans.variable} --font-karla dark`}>
+        <body>{children}</body>
+      </html>
+    </ClerkProvider>
   );
 }

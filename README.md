@@ -1,29 +1,47 @@
-# Create T3 App
+# PROJECT SUMMARY
 
-This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
+The Data Management System is a web-based application designed to help users efficiently store, organize, and retrieve files across different categories. The system provides an intuitive interface for file management, folder navigation, and a chat-based assistant to aid in searching for files.
 
-## What's next? How do I make an app with this?
+# PROJECT GOALS & TASKS
 
-We try to keep this project as simple as possible, so you can start with just the scaffolding we set up for you, and add additional things later when they become necessary.
+1. Database & Authentication Setup
 
-If you are not familiar with the different technologies used in this project, please refer to the respective docs. If you still are in the wind, please join our [Discord](https://t3.gg/discord) and ask for help.
+- [] Set up Prisma schema with User, File, and Category models
+- [x] Configure ClerkAuth with Google provider
+- [x] Create login/signup pages
+- [] Implement role-based middleware
 
-- [Next.js](https://nextjs.org)
-- [NextAuth.js](https://next-auth.js.org)
-- [Prisma](https://prisma.io)
-- [Drizzle](https://orm.drizzle.team)
-- [Tailwind CSS](https://tailwindcss.com)
-- [tRPC](https://trpc.io)
+2. File Management Core
 
-## Learn More
+- [x] Create Google Drive service integration
+- [] Build file upload component
+- [] Implement file listing and preview
+- [] Add file metadata storage in Prisma
 
-To learn more about the [T3 Stack](https://create.t3.gg/), take a look at the following resources:
+3. Folder Structure
 
-- [Documentation](https://create.t3.gg/)
-- [Learn the T3 Stack](https://create.t3.gg/en/faq#what-learning-resources-are-currently-available) — Check out these awesome tutorials
+- [] Design database schema for categories/folders
+- [] Create folder navigation component
+- [] Implement breadcrumb navigation
+- [] Add folder CRUD operations
 
-You can check out the [create-t3-app GitHub repository](https://github.com/t3-oss/create-t3-app) — your feedback and contributions are welcome!
+4. Search & Chat Features
 
-## How do I deploy this?
+- [] Set up OpenAI API integration
+- [] Create chat interface component
+- [] Implement file search functionality
+- [] Connect chat responses to file search
 
-Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
+5. UI/UX Implementation
+
+- [] Design and implement dashboard layout
+- [] Create responsive navigation sidebar
+- [] Add loading states and error handling
+- [] Implement drag-and-drop file organization
+
+6. Final Integration
+
+- [] Connect all components with proper state management
+- [] Add file filtering and sorting
+- [] Implement real-time updates
+- [] Add user preferences and settings
