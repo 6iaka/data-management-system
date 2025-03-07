@@ -45,3 +45,7 @@ The Data Management System is a web-based application designed to help users eff
 - [] Add file filtering and sorting
 - [] Implement real-time updates
 - [] Add user preferences and settings
+
+# NOTES:
+
+- [] Activity tracking for all users

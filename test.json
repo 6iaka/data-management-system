@@ -1,0 +1,76 @@
+[
+  {
+    "kind": "drive#file",
+    "userPermission": {
+      "id": "me",
+      "type": "user",
+      "role": "writer",
+      "kind": "drive#permission",
+      "selfLink": "https://www.googleapis.com/drive/v2/files/1fGOGxz2KtXFAVUnOosZO1csspZCvsDD3/permissions/me",
+      "etag": "\"k_WxCOIwbJsVW4BGWiE7OJsIg4k\"",
+      "pendingOwner": false
+    },
+    "selfLink": "https://www.googleapis.com/drive/v2/files/1fGOGxz2KtXFAVUnOosZO1csspZCvsDD3",
+    "ownerNames": ["pridila.2006"],
+    "lastModifyingUserName": "pridila.2006",
+    "editable": true,
+    "writersCanShare": true,
+    "mimeType": "application/vnd.google-apps.folder",
+    "parents": [
+      {
+        "selfLink": "https://www.googleapis.com/drive/v2/files/1fGOGxz2KtXFAVUnOosZO1csspZCvsDD3/parents/151uccR4uj_e_mAFGKGuPFDTCxI7Q9VrB",
+        "id": "151uccR4uj_e_mAFGKGuPFDTCxI7Q9VrB",
+        "isRoot": false,
+        "kind": "drive#parentReference",
+        "parentLink": "https://www.googleapis.com/drive/v2/files/151uccR4uj_e_mAFGKGuPFDTCxI7Q9VrB"
+      }
+    ],
+    "appDataContents": false,
+    "iconLink": "https://drive-thirdparty.googleusercontent.com/16/type/application/vnd.google-apps.folder+shared",
+    "shared": true,
+    "lastModifyingUser": {
+      "displayName": "pridila.2006",
+      "kind": "drive#user",
+      "isAuthenticatedUser": false,
+      "permissionId": "14933694037413221589",
+      "emailAddress": "pridila.2006@gmail.com",
+      "picture": {
+        "url": "https://lh3.googleusercontent.com/a-/ALV-UjXjsFGVLl0e-IHQMm7hY1zymm62mf60RjKztpK5RoSSrByw6eb2=s64"
+      }
+    },
+    "owners": [
+      {
+        "displayName": "pridila.2006",
+        "kind": "drive#user",
+        "isAuthenticatedUser": false,
+        "permissionId": "14933694037413221589",
+        "emailAddress": "pridila.2006@gmail.com",
+        "picture": {
+          "url": "https://lh3.googleusercontent.com/a-/ALV-UjXjsFGVLl0e-IHQMm7hY1zymm62mf60RjKztpK5RoSSrByw6eb2=s64"
+        }
+      }
+    ],
+    "copyable": false,
+    "etag": "\"MTc0MTMzNzc5MjI3NA\"",
+    "alternateLink": "https://drive.google.com/drive/folders/1fGOGxz2KtXFAVUnOosZO1csspZCvsDD3",
+    "embedLink": "https://drive.google.com/embeddedfolderview?id=1fGOGxz2KtXFAVUnOosZO1csspZCvsDD3",
+    "copyRequiresWriterPermission": false,
+    "spaces": ["drive"],
+    "id": "1fGOGxz2KtXFAVUnOosZO1csspZCvsDD3",
+    "title": "Ressources",
+    "labels": {
+      "viewed": false,
+      "restricted": false,
+      "starred": false,
+      "hidden": false,
+      "trashed": false
+    },
+    "explicitlyTrashed": false,
+    "createdDate": "2025-03-07T08:56:32.274Z",
+    "modifiedDate": "2025-03-07T08:56:32.274Z",
+    "markedViewedByMeDate": "1970-01-01T00:00:00.000Z",
+    "quotaBytesUsed": "0",
+    "version": "1",
+    "capabilities": { "canEdit": true, "canCopy": false }
+  }
+]

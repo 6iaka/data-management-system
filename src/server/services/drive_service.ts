@@ -29,6 +29,15 @@ class DriveService {
     if (!files) return [];
     return files;
   };
+
+  getAllFolders = async () => {
+    const response = await this.drive.files.list({
+      q: `mimeType = 'application/vnd.google-apps.folder' and '151uccR4uj_e_mAFGKGuPFDTCxI7Q9VrB' in parents`,
+    });
+    const files = response.data.items;
+    if (!files) return [];
+    return files;
+  };
 }
 
 const driveService = new DriveService();

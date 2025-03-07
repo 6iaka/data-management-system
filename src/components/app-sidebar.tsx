@@ -1,3 +1,4 @@
+import { SignOutButton } from "@clerk/nextjs";
 import { Calendar, Home, Inbox, Search, Settings } from "lucide-react";
 import {
   Sidebar,
@@ -56,6 +57,12 @@ const AppSidebar = () => {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <SignOutButton />
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

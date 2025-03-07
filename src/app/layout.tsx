@@ -21,7 +21,10 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <ClerkProvider>
-      <html lang="en" className={`${fontSans.variable} --font-karla dark`}>
+      <html
+        lang="en"
+        className={`${fontSans.variable} --font-karla dark w-screen overflow-x-hidden`}
+      >
         <body>{children}</body>
       </html>
     </ClerkProvider>

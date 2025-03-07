@@ -1,12 +1,14 @@
 import Link from "next/link";
-import TooltipWrapper from "./TooltipWrapper";
-import { Badge } from "./ui/badge";
 import { Card } from "./ui/card";
 
-const FolderCard = () => {
+type Props = {
+  name?: string | null;
+};
+
+const FolderCard = ({ name }: Props) => {
   return (
     <Link href={"/"} title={`Ressources Folder`}>
-      <Card className="hover:bg-secondary group flex min-w-[200px] items-center justify-between gap-2 p-2.5 transition-all">
+      <Card className="group flex min-w-[200px] items-center justify-between gap-2 p-2.5 transition-all hover:bg-secondary">
         <div>
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -29,19 +31,17 @@ const FolderCard = () => {
         </div>
 
         <div className="flex flex-col">
-          <h3 className="line-clamp-1 text-sm font-semibold">Ressources</h3>
+          <h3 className="line-clamp-1 text-sm font-semibold">
+            {name ?? "Folder"}
+          </h3>
           <div className="flex items-center justify-between gap-2"></div>
-          <p className="text-muted-foreground line-clamp-2 text-xs">
+          <p className="line-clamp-2 text-xs text-muted-foreground">
             Lorem ipsum dolor sit amet consectetur adipisicing elit. Maiores a
             non esse porro error similique ipsum labore. Aspernatur error
             quisquam provident obcaecati aliquam corrupti sequi maxime, sunt
             rerum a quo.
           </p>
         </div>
-
-        <TooltipWrapper label="Children Count">
-          <Badge className="h-4.5 py-0">17</Badge>
-        </TooltipWrapper>
       </Card>
     </Link>
   );
