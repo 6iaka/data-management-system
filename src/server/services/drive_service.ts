@@ -1,5 +1,6 @@
 "server only";
 import { google } from "googleapis";
+import { Readable } from "stream";
 import { env } from "~/env";
 
 class DriveService {
@@ -16,10 +17,47 @@ class DriveService {
     scopes: ["https://www.googleapis.com/auth/drive"],
   });
 
-  private drive = google.drive({
-    version: "v2",
-    auth: this.auth,
-  });
+  private drive = google.drive({ version: "v2", auth: this.auth });
+
+  /**
+   * Upload a file to Google Drive
+   * @param params Upload parameters including file data and metadata
+   * @returns Uploaded file metadata
+   */
+  uploadFile = async ({
+    files,
+    folderId,
+  }: {
+    files: FileList;
+    folderId: string;
+  }) => {
+    try {
+      const fileToUpload = files[0];
+      if (!fileToUpload) throw new Error("No file provided");
+      const arrayBuffer = await fileToUpload.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      const stream = Readable.from(buffer);
+
+      const fileMetadata = {
+        title: fileToUpload.name,
+        parents: [{ id: folderId }],
+        mimeType: fileToUpload.type,
+      };
+
+      const media = { mimeType: fileToUpload.type, body: stream };
+      const response = await this.drive.files.insert({
+        media,
+        requestBody: fileMetadata,
+        fields: "id,title,mimeType,fileSize,parents,webContentLink,webViewLink",
+        supportsAllDrives: true,
+      });
+
+      return response.data;
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      throw new Error("Failed to upload file");
+    }
+  };
 
   createFolder = async (name: string, parentId: string) => {
     try {

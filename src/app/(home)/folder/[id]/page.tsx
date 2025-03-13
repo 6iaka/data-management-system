@@ -29,9 +29,7 @@ import {
 } from "~/components/ui/dialog";
 import CreateFolderForm from "~/components/forms/CreateFolderForm";
 
-type Props = {
-  params: Promise<{ id: string }>;
-};
+type Props = { params: Promise<{ id: string }> };
 
 const FolderPage = async ({ params }: Props) => {
   const id = (await params).id;
@@ -63,7 +61,7 @@ const FolderPage = async ({ params }: Props) => {
         </div>
 
         <div className="flex gap-2">
-          <Button size={"sm"}>Add File</Button>
+          <Button size={"sm"}>Upload File</Button>
 
           <Dialog>
             <DialogTrigger asChild>

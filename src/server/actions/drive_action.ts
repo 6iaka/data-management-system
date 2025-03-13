@@ -19,23 +19,16 @@ export const createNewFolder = async (payload: {
   parentId?: string;
 }) => {
   const schema = z.object({
-    folderName: z.string().min(2, {
-      message: "Folder name must be at least 2 characters.",
-    }),
+    folderName: z.string().min(2),
     parentId: z.string().optional(),
   });
   const valid = schema.parse(payload);
 
-  if (valid.parentId) {
-    await driveService.createFolder(valid.folderName, valid.parentId);
-  } else {
-    const rootFolder = await driveService.getRootFolder();
+  const rootFolderId =
+    valid.parentId || (await driveService.getRootFolder())?.id;
+  if (!rootFolderId) return null;
 
-    if (!rootFolder) return null;
-    if (!rootFolder.id) return null;
-
-    await driveService.createFolder(valid.folderName, rootFolder.id);
-  }
+  await driveService.createFolder(valid.folderName, rootFolderId);
 
   revalidatePath("/");
   revalidatePath("/folder/:id", "page");

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import FileCard from "~/components/FileCard";
 import FolderCard from "~/components/FolderCard";
 import CreateFolderForm from "~/components/forms/CreateFolderForm";
+import FileUploadForm from "~/components/forms/FileUploadForm";
 import TooltipWrapper from "~/components/TooltipWrapper";
 import { Button } from "~/components/ui/button";
 import {
@@ -31,7 +32,17 @@ const HomePage = async () => {
         <h2 className="text-xl font-bold">Root Folder</h2>
 
         <div className="flex gap-2">
-          <Button size={"sm"}>Add File</Button>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button size={"sm"}>Upload File</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Upload File</DialogTitle>
+              </DialogHeader>
+              <FileUploadForm />
+            </DialogContent>
+          </Dialog>
 
           <Dialog>
             <DialogTrigger asChild>

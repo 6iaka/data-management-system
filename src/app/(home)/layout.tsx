@@ -1,5 +1,5 @@
 import AIModal from "~/components/AIModal";
-import AppSidebar from "~/components/app-sidebar";
+import AppSidebar from "~/components/AppSidebar";
 import TooltipWrapper from "~/components/TooltipWrapper";
 import { Input } from "~/components/ui/input";
 import { SidebarProvider, SidebarTrigger } from "~/components/ui/sidebar";

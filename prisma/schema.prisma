@@ -7,45 +7,53 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
-enum FileType {
-    VIDEO
-    IMAGE
-    DOCUMENT
+model Tag {
+    id   Int    @id @default(autoincrement())
+    name String
+
+    files   File[]
+    folders Folder[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 }
 
 model Folder {
-    id          Int      @id @default(autoincrement())
-    name        String
+    id   Int    @id @default(autoincrement())
+    name String
+
+    userClerkId String
+    googleId    String  @unique
     description String?
-    parentId    Int?
-    googleId    String   @unique
-    parent      Folder?  @relation("FolderToFolder", fields: [parentId], references: [id])
-    children    Folder[] @relation("FolderToFolder")
-    files       File[]
-    isRoot      Boolean  @default(false)
-    createdAt   DateTime @default(now())
-    updatedAt   DateTime @updatedAt
+
+    parentId Int?
+    parent   Folder?  @relation("FolderToFolder", fields: [parentId], references: [id])
+    children Folder[] @relation("FolderToFolder")
+    files    File[]
+    tags     Tag[]
+
+    isRoot Boolean @default(false)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 }
 
 model File {
-    id          Int       @id @default(autoincrement())
-    name        String
-    description String?
-    fileType    FileType
-    mimeType    String
-    size        Int
-    googleId    String    @unique
-    url         String
-    tags        String[]
-    folderId    Int
-    folder      Folder    @relation(fields: [folderId], references: [id])
-    isArchived  Boolean   @default(false)
-    lastViewed  DateTime?
-    createdBy   String
-    createdAt   DateTime  @default(now())
-    updatedAt   DateTime  @updatedAt
+    id       Int    @id @default(autoincrement())
+    name     String
+    location String
 
-    @@index([name])
-    @@index([fileType])
-    @@index([tags])
+    mimeType String
+    size     Int
+
+    googleId String @unique
+    url      String
+
+    folderId Int
+    folder   Folder @relation(fields: [folderId], references: [id])
+    tags     Tag[]
+
+    userClerkId String
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
 }
