@@ -28,6 +28,7 @@ import {
   DialogTrigger,
 } from "~/components/ui/dialog";
 import CreateFolderForm from "~/components/forms/CreateFolderForm";
+import FileUploadForm from "~/components/forms/FileUploadForm";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -61,7 +62,17 @@ const FolderPage = async ({ params }: Props) => {
         </div>
 
         <div className="flex gap-2">
-          <Button size={"sm"}>Upload File</Button>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button size={"sm"}>Upload File</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Upload File</DialogTitle>
+              </DialogHeader>
+              <FileUploadForm folderId={id} />
+            </DialogContent>
+          </Dialog>
 
           <Dialog>
             <DialogTrigger asChild>
