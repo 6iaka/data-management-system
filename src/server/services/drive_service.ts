@@ -48,7 +48,6 @@ class DriveService {
       const response = await this.drive.files.insert({
         media,
         requestBody: fileMetadata,
-        fields: "id,title,mimeType,fileSize,parents,webContentLink,webViewLink",
         supportsAllDrives: true,
       });
 
@@ -81,10 +80,7 @@ class DriveService {
 
   deleteFolder = async (folderId: string): Promise<boolean> => {
     try {
-      await this.drive.files.delete({
-        fileId: folderId,
-      });
-
+      await this.drive.files.delete({ fileId: folderId });
       return true;
     } catch (error) {
       console.error("Error deleting folder:", error);
@@ -131,7 +127,7 @@ class DriveService {
   getFolderContent = async (folderId: string) => {
     const response = await this.drive.files.list({
       q: `'${folderId}' in parents`,
-      fields: "items(id,title,mimeType,fileSize)",
+      // fields: "items(id,title,mimeType,fileSize)",
     });
     const data = response.data.items ?? [];
 

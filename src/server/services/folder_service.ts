@@ -1,34 +1,46 @@
 "server only";
-
 import type { Prisma } from "@prisma/client";
 import { db } from "../db";
 
 class FolderService {
   findById = async (id: number) => {
-    const folder = await db.folder.findUnique({ where: { id } });
-    return folder;
+    return await db.folder.findUnique({
+      where: { id },
+      include: {
+        files: true,
+        children: true,
+      },
+    });
   };
 
-  getAll = async (parentId?: number) => {
-    const folders = await db.folder.findMany({
-      ...(parentId && { where: { parentId } }),
+  getRootData = async () => {
+    return await db.folder.findFirst({
+      where: { isRoot: true },
+      include: {
+        files: true,
+        children: true,
+      },
     });
-    const filtered = folders.filter((item) => !item.isRoot);
-    return filtered;
+  };
+
+  findByGoogleId = async (googleId: string) => {
+    return await db.folder.findUnique({ where: { googleId } });
+  };
+
+  getAll = async () => {
+    return await db.folder.findMany();
   };
 
   upsert = async (insertData: Prisma.FolderCreateInput) => {
-    const upserted = await db.folder.upsert({
+    return await db.folder.upsert({
       where: { googleId: insertData.googleId },
       create: insertData,
       update: insertData,
     });
-    return upserted;
   };
 
   delete = async (id: number) => {
-    const deleted = await db.folder.delete({ where: { id } });
-    return deleted;
+    return await db.folder.delete({ where: { id } });
   };
 }
 

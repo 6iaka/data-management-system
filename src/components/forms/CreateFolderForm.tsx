@@ -14,28 +14,42 @@ import {
   FormMessage,
 } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
-import { createNewFolder } from "~/server/actions/drive_action";
+import { createNewFolder } from "../../server/actions/folder_action";
+import { Textarea } from "../ui/textarea";
 
 const formSchema = z.object({
-  folderName: z.string().min(2, {
-    message: "Folder name must be at least 2 characters.",
-  }),
-  parentId: z.string().optional(),
+  name: z
+    .string()
+    .min(1, "Folder name is required")
+    .max(255, "Folder name cannot exceed 255 characters")
+    .regex(/^[^<>:"/\\|?*]+$/, {
+      message: "Folder name contains invalid characters",
+    })
+    .trim(),
+
+  description: z
+    .string()
+    .min(10, "Description should be at least 10 characters")
+    .max(1000, "Description cannot exceed 1000 characters"),
 });
 
-type Props = { parentId?: string };
+type Props = { parentId?: number };
 
 const CreateFolderForm = ({ parentId }: Props) => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      folderName: "",
-      parentId: parentId,
+      name: "",
+      description: "",
     },
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    await createNewFolder(values);
+    await createNewFolder({
+      description: values.description,
+      name: values.name,
+      parentId,
+    });
     form.reset();
   };
 
@@ -46,13 +60,27 @@ const CreateFolderForm = ({ parentId }: Props) => {
         className="flex flex-col gap-4"
       >
         <FormField
-          name="folderName"
+          name="name"
           control={form.control}
           render={({ field }) => (
             <FormItem className="flex flex-col">
               <FormLabel>Folder Name</FormLabel>
               <FormControl>
-                <Input placeholder="Type here..." {...field} />
+                <Input placeholder="Folder name" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          name="description"
+          control={form.control}
+          render={({ field }) => (
+            <FormItem className="flex flex-col">
+              <FormLabel>Description</FormLabel>
+              <FormControl>
+                <Textarea placeholder="Description" {...field}></Textarea>
               </FormControl>
               <FormMessage />
             </FormItem>

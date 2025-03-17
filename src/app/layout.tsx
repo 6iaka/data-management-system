@@ -3,6 +3,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { Karla as FontSans } from "next/font/google";
 import { type Metadata } from "next";
 import NextTopLoader from "nextjs-toploader";
+import QueryProvider from "~/components/QueryProvider";
 
 export const metadata: Metadata = {
   title: "Create T3 App",
@@ -27,8 +28,10 @@ export default function RootLayout({
         className={`${fontSans.variable} --font-karla dark w-screen overflow-x-hidden`}
       >
         <body>
-          <NextTopLoader />
-          {children}
+          <QueryProvider>
+            <NextTopLoader />
+            {children}
+          </QueryProvider>
         </body>
       </html>
     </ClerkProvider>

@@ -1,25 +1,12 @@
-import { Table } from "lucide-react";
+import { ChevronLeft, Table } from "lucide-react";
+import Link from "next/link";
 import { notFound } from "next/navigation";
-import React from "react";
 import FileCard from "~/components/FileCard";
 import FolderCard from "~/components/FolderCard";
+import CreateFolderForm from "~/components/forms/CreateFolderForm";
+import FileUploadForm from "~/components/forms/FileUploadForm";
 import TooltipWrapper from "~/components/TooltipWrapper";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbSeparator,
-} from "~/components/ui/breadcrumb";
 import { Button } from "~/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "~/components/ui/select";
-import driveService from "~/server/services/drive_service";
 import {
   Dialog,
   DialogContent,
@@ -27,41 +14,41 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "~/components/ui/dialog";
-import CreateFolderForm from "~/components/forms/CreateFolderForm";
-import FileUploadForm from "~/components/forms/FileUploadForm";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
+import folderService from "~/server/services/folder_service";
 
 type Props = { params: Promise<{ id: string }> };
 
 const FolderPage = async ({ params }: Props) => {
-  const id = (await params).id;
-  const data = await driveService.getFolderDetails(id);
+  const id = Number((await params).id);
+  if (isNaN(id)) notFound();
+
+  const data = await folderService.findById(id);
   if (!data) notFound();
 
   return (
     <main className="flex flex-col gap-4 p-4">
-      <header className="flex items-center justify-between gap-2">
-        <div>
-          <h2 className="text-xl font-bold">{data.folder.title} Folder</h2>
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbLink href={`/`}>Root</BreadcrumbLink>
-              </BreadcrumbItem>
-              {data.parents.map((item) => (
-                <React.Fragment key={item.id}>
-                  <BreadcrumbSeparator />
-                  <BreadcrumbItem>
-                    <BreadcrumbLink href={`/folder/${item.id}`}>
-                      {item.title}
-                    </BreadcrumbLink>
-                  </BreadcrumbItem>
-                </React.Fragment>
-              ))}
-            </BreadcrumbList>
-          </Breadcrumb>
+      <header className="flex items-end justify-between gap-2">
+        <div className="flex min-w-[200px] flex-1 flex-col items-start justify-end gap-2">
+          {data.parentId && (
+            <Button variant={"ghost"} asChild>
+              <Link href={`/folder/${data.parentId}`}>
+                <ChevronLeft />
+                Back
+              </Link>
+            </Button>
+          )}
+
+          <h2 className="text-xl font-bold">{data.name}</h2>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Dialog>
             <DialogTrigger asChild>
               <Button size={"sm"}>Upload File</Button>
@@ -84,7 +71,6 @@ const FolderPage = async ({ params }: Props) => {
               <DialogHeader>
                 <DialogTitle>Create a new folder</DialogTitle>
               </DialogHeader>
-
               <CreateFolderForm parentId={id} />
             </DialogContent>
           </Dialog>
@@ -94,9 +80,9 @@ const FolderPage = async ({ params }: Props) => {
       <section className="flex flex-col gap-2 rounded-lg">
         <h3 className="text-balance font-medium">Folders</h3>
         <div className="grid w-full grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-2">
-          {data.contents.folders.length > 0 ? (
-            data.contents.folders.map((item) => (
-              <FolderCard id={item.id} name={item.title} key={item.id} />
+          {data.children.length > 0 ? (
+            data.children.map((item) => (
+              <FolderCard data={item} key={item.id} />
             ))
           ) : (
             <p className="text-sm text-muted-foreground">No Folders Here</p>
@@ -128,8 +114,8 @@ const FolderPage = async ({ params }: Props) => {
         </header>
 
         <div className="grid w-full grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-2">
-          {data.contents.files.length > 0 ? (
-            data.contents.files.map((item) => <FileCard key={item.id} />)
+          {data.files.length > 0 ? (
+            data.files.map((item) => <FileCard file={item} key={item.id} />)
           ) : (
             <p className="text-sm text-muted-foreground">No Files Here</p>
           )}

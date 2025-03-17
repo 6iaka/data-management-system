@@ -4,13 +4,24 @@ import type { Prisma } from "@prisma/client";
 import { db } from "../db";
 
 class FileService {
+  findById = async (id: number) => {
+    return await db.file.findUnique({
+      where: { id },
+      include: {
+        tags: true,
+        folder: true,
+      },
+    });
+  };
+
+  getAll = async () => await db.file.findMany();
+
   upsert = async (insertData: Prisma.FileCreateInput) => {
-    const upserted = await db.file.upsert({
+    return await db.file.upsert({
       where: { googleId: insertData.googleId },
       create: insertData,
       update: insertData,
     });
-    return upserted;
   };
 
   delete = async (id: number) => {

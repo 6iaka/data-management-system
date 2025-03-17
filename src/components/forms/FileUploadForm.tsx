@@ -1,7 +1,8 @@
 "use client";
 import { useUser } from "@clerk/nextjs";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
 import { notFound } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -17,39 +18,50 @@ import {
 } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
 import { uploadFile } from "~/server/actions/file_action";
+import { getAllTags } from "~/server/actions/tag_action";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "~/components/ui/popover";
+import { cn } from "~/lib/utils";
+import {
+  Command,
+  CommandInput,
+  CommandList,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+} from "~/components/ui/command";
 
 const formSchema = z.object({
-  name: z.string(),
-  location: z.string(),
-  tags: z.string().array(),
-  folderId: z.string().optional(),
-  userClerkId: z.string(),
   files: z.instanceof(FileList),
+  tag: z.string().min(1),
 });
 
-type Props = { folderId?: string };
+type Props = { folderId?: number };
 
 const FileUploadForm = ({ folderId }: Props) => {
+  const { data } = useQuery({
+    queryKey: ["tags"],
+    queryFn: async () => await getAllTags(),
+  });
+
   const { user } = useUser();
   if (!user) notFound();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      tags: [],
-      name: "",
-      userClerkId: "",
-      location: "",
-    },
+    defaultValues: { tag: "" },
   });
   const fileRef = form.register("files");
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     await uploadFile({
       files: values.files,
+      tag: values.tag,
       folderId,
     });
-
     form.reset();
   };
 
@@ -74,16 +86,63 @@ const FileUploadForm = ({ folderId }: Props) => {
         />
 
         <FormField
-          name="name"
           control={form.control}
+          name="tag"
           render={({ field }) => (
             <FormItem className="flex flex-col">
-              <FormLabel>Folder Name</FormLabel>
-              <FormControl>
-                <Input placeholder="Type here..." {...field} />
-              </FormControl>
+              <FormLabel>Tag</FormLabel>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <FormControl>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      className={cn(
+                        "w-full justify-between",
+                        !field.value && "text-muted-foreground",
+                      )}
+                    >
+                      {field.value
+                        ? data?.find((tag) => tag.name === field.value)?.name
+                        : "Select tag"}
+                      <ChevronsUpDown className="opacity-50" />
+                    </Button>
+                  </FormControl>
+                </PopoverTrigger>
+
+                <PopoverContent className="w-[--radix-popover-trigger-width] flex-1 p-0">
+                  <Command>
+                    <CommandInput placeholder="Search tag..." className="h-9" />
+                    <CommandList>
+                      <CommandEmpty>No Tags found.</CommandEmpty>
+                      <CommandGroup>
+                        {data?.map((tag) => (
+                          <CommandItem
+                            value={tag.name}
+                            key={tag.name}
+                            onSelect={() => {
+                              form.setValue("tag", tag.name);
+                            }}
+                          >
+                            {tag.name}
+                            <Check
+                              className={cn(
+                                "ml-auto",
+                                tag.name === field.name
+                                  ? "opacity-100"
+                                  : "opacity-0",
+                              )}
+                            />
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
               <FormDescription>
-                Choose a clear and descriptive name for your folder
+                This tag will be used to organize the files. Please create new
+                ones if neccessary.
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -92,7 +151,7 @@ const FileUploadForm = ({ folderId }: Props) => {
 
         <Button type="submit" disabled={form.formState.isSubmitting}>
           {form.formState.isSubmitting && <Loader2 className="animate-spin" />}
-          Create
+          Upload
         </Button>
       </form>
     </Form>

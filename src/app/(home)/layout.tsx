@@ -1,4 +1,3 @@
-import AIModal from "~/components/AIModal";
 import AppSidebar from "~/components/AppSidebar";
 import TooltipWrapper from "~/components/TooltipWrapper";
 import { Input } from "~/components/ui/input";
@@ -10,7 +9,6 @@ export default function HomeLayout({
   return (
     <SidebarProvider>
       <AppSidebar />
-      <AIModal />
 
       <main className="flex min-h-svh w-full flex-col">
         <header className="flex w-full gap-4 border-b p-4">
@@ -18,7 +16,16 @@ export default function HomeLayout({
             <SidebarTrigger className="size-9 shrink-0" />
           </TooltipWrapper>
 
-          <Input placeholder="Search" className="flex-1" />
+          <form action="/search" className="flex-1">
+            <Input
+              placeholder="Search"
+              className="flex-1"
+              name="query"
+              minLength={1}
+              required
+              min={1}
+            />
+          </form>
         </header>
 
         <div className="flex flex-1 flex-col">{children}</div>

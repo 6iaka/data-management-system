@@ -1,6 +1,5 @@
+import type { File } from "@prisma/client";
 import { EllipsisVertical } from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
 import { Card } from "~/components/ui/card";
 import {
   DropdownMenu,
@@ -8,12 +7,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
+import { formatFileSize } from "~/lib/utils";
+import DynamicImage from "./DynamicImage";
 import { Button } from "./ui/button";
 
-const FileCard = () => {
+type Props = { file: File };
+
+const FileCard = ({ file }: Props) => {
   return (
-    <Link href={"/"} title="Name of the file">
-      <Card className="hover:bg-secondary group relative flex flex-col items-center justify-center gap-4 p-4 transition-all">
+    <a target="_blank" href={file.url} title={file.name}>
+      <Card className="group relative flex flex-col items-center justify-center gap-4 p-4 transition-all hover:bg-secondary">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -31,32 +34,57 @@ const FileCard = () => {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <div>
-          <Image
-            src={"/filetype-jpg.svg"}
-            className="size-14 transition-all group-hover:-translate-y-1"
-            unoptimized
-            height={40}
-            width={40}
-            alt=""
-          />
-        </div>
+        <DynamicImage fileExtension={file.fileExtension} />
 
-        <div className="flex flex-col gap-1">
-          <p className="text-muted-foreground line-clamp-1 text-xs">
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Pariatur id
-            laborum, mollitia iusto vero nihil et ad est, ratione odit quo
-            dolorem! Quos temporibus deserunt quasi tempore dolorem, ullam iste!
+        <div className="flex w-full flex-col gap-1">
+          <p className="line-clamp-1 text-xs text-muted-foreground">
+            {file.name}
           </p>
 
           <div className="flex items-center justify-between gap-4 text-xs">
-            <p>150 MB</p>
-            <p>12.07.2025</p>
+            <p>{formatFileSize(file.size || 0)}</p>
+            <p>{new Date(file.createdAt).toLocaleDateString()}</p>
           </div>
         </div>
       </Card>
-    </Link>
+    </a>
   );
 };
 
+// <a target="_blank" href={file.embedLink || "/"} title={file?.title || ""}>
+// <Card className="group relative flex flex-col items-center justify-center gap-4 p-4 transition-all hover:bg-secondary">
+//   <DropdownMenu>
+//     <DropdownMenuTrigger asChild>
+//       <Button
+//         size={"icon"}
+//         variant={"ghost"}
+//         className="absolute right-2 top-2 size-7"
+//       >
+//         <EllipsisVertical />
+//       </Button>
+//     </DropdownMenuTrigger>
+//     <DropdownMenuContent align="end">
+//       <DropdownMenuItem>Bookmark</DropdownMenuItem>
+//       <DropdownMenuItem>Edit</DropdownMenuItem>
+//       <DropdownMenuItem>Delete</DropdownMenuItem>
+//     </DropdownMenuContent>
+//   </DropdownMenu>
+
+//   <DynamicImage fileExtension={file.fileExtension || "raw"} />
+
+//   <div className="flex flex-col gap-1">
+//     <p className="line-clamp-1 text-xs text-muted-foreground">
+//       {file?.title}
+//     </p>
+
+//     <div className="flex items-center justify-between gap-4 text-xs">
+//       <p>{formatFileSize(file?.fileSize || 0)}</p>
+//       <p>
+//         {file?.createdDate &&
+//           new Date(file.createdDate).toLocaleDateString()}
+//       </p>
+//     </div>
+//   </div>
+// </Card>
+// </a>
 export default FileCard;
