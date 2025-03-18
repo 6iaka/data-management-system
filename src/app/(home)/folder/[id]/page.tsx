@@ -36,11 +36,18 @@ const FolderPage = async ({ params }: Props) => {
     <main className="flex flex-col gap-4 p-4">
       <header className="flex items-end justify-between gap-2">
         <div className="flex min-w-[200px] flex-1 flex-col items-start justify-end gap-2">
-          {data.parentId && (
+          {data.parentId ? (
             <Button variant={"ghost"} asChild>
               <Link href={`/folder/${data.parentId}`}>
                 <ChevronLeft />
                 Back
+              </Link>
+            </Button>
+          ) : (
+            <Button variant={"ghost"} asChild>
+              <Link href={"/"}>
+                <ChevronLeft />
+                Dashboard
               </Link>
             </Button>
           )}

@@ -2,15 +2,14 @@ import type { Extension } from "@prisma/client";
 import Image from "next/image";
 import { z } from "zod";
 
-const schema = z
-  .enum(["png", "jpg", "jpeg", "svg", "gif", "raw"])
-  .default("raw");
+const schema = z.enum(["png", "jpg", "jpeg", "svg", "gif", "raw"]);
 
 type Props = { fileExtension: Extension };
 
 const DynamicImage = ({ fileExtension }: Props) => {
-  const valid = schema.parse(fileExtension);
-  const type = valid === "jpeg" ? "jpg" : valid;
+  const valid = schema.safeParse(fileExtension);
+  const validType = valid.success ? valid.data : "raw";
+  const type = validType === "jpeg" ? "jpg" : validType;
 
   return (
     <>

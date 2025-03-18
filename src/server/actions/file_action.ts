@@ -30,16 +30,18 @@ export const uploadFile = async ({
 
     const driveFile = await driveService.uploadFile({
       folderId: rootFolderId,
-      files,
+      file: files[0]!,
     });
     if (!driveFile.id) throw new Error("GoogleId is not found");
+    console.log(driveFile);
 
     try {
       if (!driveFile.fileExtension)
         throw new Error("fileExtension is not found");
       if (!driveFile.mimeType) throw new Error("mimetype is not found");
       if (!driveFile.fileSize) throw new Error("fileSize is not found");
-      if (!driveFile.embedLink) throw new Error("embedLink is not found");
+      if (!driveFile.webContentLink) throw new Error("embedLink is not found");
+      if (!driveFile.webContentLink) throw new Error("embedLink is not found");
       if (!driveFile.title) throw new Error("title is not found");
 
       const newFile = await fileService.upsert({
@@ -50,7 +52,8 @@ export const uploadFile = async ({
         googleId: driveFile.id,
         mimeType: driveFile.mimeType,
         size: Number(driveFile.fileSize),
-        url: driveFile.embedLink,
+        url: driveFile.webContentLink,
+        previewLink: driveFile.thumbnailLink,
         tag: { connect: { name: tag } },
       });
 
@@ -59,7 +62,7 @@ export const uploadFile = async ({
       revalidatePath("/");
       revalidatePath("/folder/:id", "page");
     } catch (error) {
-      await driveService.deleteFolder(driveFile.id);
+      await driveService.deleteItem(driveFile.id);
       console.error(error);
     }
   } catch (error) {

@@ -2,15 +2,19 @@
 
 import type { Prisma } from "@prisma/client";
 import { db } from "../db";
+import { DriveService } from "./drive_service";
 
-class FileService {
+export class FileService {
+  private driveService: DriveService;
+
+  constructor() {
+    this.driveService = new DriveService();
+  }
+
   findById = async (id: number) => {
     return await db.file.findUnique({
       where: { id },
-      include: {
-        tags: true,
-        folder: true,
-      },
+      include: { folder: true },
     });
   };
 
@@ -27,6 +31,67 @@ class FileService {
   delete = async (id: number) => {
     const deleted = await db.file.delete({ where: { id } });
     return deleted;
+  };
+
+  /**
+   * Delete a file
+   */
+  deleteFile = async (googleId: string) => {
+    try {
+      // Delete from Drive
+      await this.driveService.deleteItem(googleId);
+
+      // Delete from database
+      await db.file.delete({
+        where: { googleId },
+      });
+
+      return true;
+    } catch (error) {
+      throw new Error(`Failed to delete file: ${(error as Error).message}`);
+    }
+  };
+
+  /**
+   * Rename a file
+   */
+  renameFile = async (googleId: string, newName: string) => {
+    try {
+      // Rename in Drive
+      await this.driveService.renameItem(googleId, newName);
+
+      // Update in database
+      const file = await db.file.update({
+        where: { googleId },
+        data: { name: newName },
+      });
+
+      return file;
+    } catch (error) {
+      throw new Error(`Failed to rename file: ${(error as Error).message}`);
+    }
+  };
+
+  /**
+   * Move a file
+   */
+  moveFile = async (googleId: string, newFolderId: string) => {
+    try {
+      // Move in Drive
+      await this.driveService.moveItem(googleId, newFolderId);
+
+      // Update in database
+      const file = await db.file.update({
+        where: { googleId },
+        data: {
+          folder: { connect: { googleId: newFolderId } },
+        },
+      });
+
+      return file;
+    } catch (error) {
+      throw new Error(`Failed to move file: ${(error as Error).message}`);
+    }
   };
 }
 

@@ -86,9 +86,49 @@ export const createNewFolder = async (payload: {
       revalidatePath("/");
       revalidatePath("/folder/:id", "page");
     } catch (error) {
-      await driveService.deleteFolder(driveFolder.id);
+      await driveService.deleteItem(driveFolder.id);
       console.error(error);
     }
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+export const editFolder = async (payload: {
+  id: number;
+  name: string;
+  description: string;
+}) => {
+  const schema = z.object({
+    id: z.coerce.number().min(1),
+    name: z
+      .string()
+      .min(1, "Folder name is required")
+      .max(255, "Folder name cannot exceed 255 characters")
+      .regex(/^[^<>:"/\\|?*]+$/, {
+        message: "Folder name contains invalid characters",
+      })
+      .trim(),
+    description: z
+      .string()
+      .min(10, "Description should be at least 10 characters")
+      .max(1000, "Description cannot exceed 1000 characters"),
+  });
+
+  try {
+    const user = await currentUser();
+    if (!user) throw new Error("Not authorized");
+    const valid = schema.parse(payload);
+
+    const newFolder = await folderService.update(valid.id, {
+      description: valid.description,
+      name: valid.name,
+    });
+
+    console.log("Folder created with success", newFolder.id);
+
+    revalidatePath("/");
+    revalidatePath("/folder/:id", "page");
   } catch (error) {
     console.error(error);
   }

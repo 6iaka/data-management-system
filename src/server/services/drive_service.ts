@@ -3,7 +3,7 @@ import { google } from "googleapis";
 import { Readable } from "stream";
 import { env } from "~/env";
 
-class DriveService {
+export class DriveService {
   private auth = new google.auth.GoogleAuth({
     credentials: {
       type: "service_account",
@@ -25,31 +25,45 @@ class DriveService {
    * @returns Uploaded file metadata
    */
   uploadFile = async ({
-    files,
+    file,
     folderId,
   }: {
-    files: FileList;
-    folderId: string;
+    file: File;
+    folderId?: string;
   }) => {
     try {
-      const fileToUpload = files[0];
-      if (!fileToUpload) throw new Error("No file provided");
-      const arrayBuffer = await fileToUpload.arrayBuffer();
+      if (!file) throw new Error("No file provided");
+
+      const arrayBuffer = await file.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
+
       const stream = Readable.from(buffer);
 
       const fileMetadata = {
-        title: fileToUpload.name,
-        parents: [{ id: folderId }],
-        mimeType: fileToUpload.type,
+        parents: folderId ? [{ id: folderId }] : [{ id: "root" }],
+        mimeType: file.type,
+        title: file.name,
       };
 
-      const media = { mimeType: fileToUpload.type, body: stream };
-      const response = await this.drive.files.insert({
-        media,
-        requestBody: fileMetadata,
-        supportsAllDrives: true,
-      });
+      const media = { mimeType: file.type, body: stream };
+
+      const response = await this.drive.files.insert(
+        {
+          requestBody: fileMetadata,
+          supportsAllDrives: true,
+          uploadType: "resumable", // Enable resumable upload
+          media,
+        },
+        {
+          retry: true,
+          retryConfig: {
+            retry: 3,
+            onRetryAttempt: (err) => {
+              console.log("Retrying upload after error:", err);
+            },
+          },
+        },
+      );
 
       return response.data;
     } catch (error) {
@@ -58,12 +72,12 @@ class DriveService {
     }
   };
 
-  createFolder = async (name: string, parentId: string) => {
+  createFolder = async (name: string, parentId?: string) => {
     try {
       const fileMetadata = {
         title: name,
         mimeType: "application/vnd.google-apps.folder",
-        parents: [{ id: parentId }],
+        parents: parentId ? [{ id: parentId }] : [{ id: "root" }],
       };
 
       const response = await this.drive.files.insert({
@@ -75,31 +89,6 @@ class DriveService {
     } catch (error) {
       console.error("Error creating folder:", error);
       throw new Error("Failed to create folder");
-    }
-  };
-
-  deleteFolder = async (folderId: string): Promise<boolean> => {
-    try {
-      await this.drive.files.delete({ fileId: folderId });
-      return true;
-    } catch (error) {
-      console.error("Error deleting folder:", error);
-      throw new Error("Failed to delete folder");
-    }
-  };
-
-  renameFolder = async (folderId: string, newName: string) => {
-    try {
-      const response = await this.drive.files.patch({
-        fileId: folderId,
-        requestBody: { title: newName },
-        fields: "id,title,mimeType,parents",
-      });
-
-      return response.data;
-    } catch (error) {
-      console.error("Error renaming folder:", error);
-      throw new Error("Failed to rename folder");
     }
   };
 
@@ -183,6 +172,56 @@ class DriveService {
     }
 
     return path;
+  };
+
+  /**
+   * Move a file or folder
+   */
+  moveItem = async (fileId: string, newParentId: string) => {
+    try {
+      // Remove from current parent and add to new parent
+      const response = await this.drive.files.patch({
+        fileId,
+        removeParents: "root", // Will remove from all current parents
+        addParents: newParentId,
+        fields: "id, parents",
+      });
+
+      return response.data;
+    } catch (error) {
+      throw new Error(`Failed to move item: ${(error as Error).message}`);
+    }
+  };
+
+  /**
+   * Rename a file or folder
+   */
+  renameItem = async (fileId: string, newName: string) => {
+    try {
+      const response = await this.drive.files.patch({
+        fileId,
+        requestBody: {
+          title: newName,
+        },
+        fields: "id,title",
+      });
+
+      return response.data;
+    } catch (error) {
+      throw new Error(`Failed to rename item: ${(error as Error).message}`);
+    }
+  };
+
+  /**
+   * Delete a file or folder
+   */
+  deleteItem = async (fileId: string) => {
+    try {
+      await this.drive.files.delete({ fileId });
+      return true;
+    } catch (error) {
+      throw new Error(`Failed to delete item: ${(error as Error).message}`);
+    }
   };
 }
 

@@ -13,6 +13,9 @@ enum Extension {
     jpeg
     jpg
     gif
+    mp4
+    mkv
+    pdf
 }
 
 model Tag {
@@ -27,7 +30,7 @@ model Tag {
 
 model Folder {
     id   Int    @id @default(autoincrement())
-    name String
+    name String @unique
 
     userClerkId String
     googleId    String @unique
@@ -47,6 +50,8 @@ model Folder {
 model File {
     id   Int    @id @default(autoincrement())
     name String
+
+    previewLink String?
 
     mimeType      String
     fileExtension Extension
