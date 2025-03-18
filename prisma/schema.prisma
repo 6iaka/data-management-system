@@ -15,6 +15,7 @@ enum Extension {
     gif
     mp4
     mkv
+    mov
     pdf
 }
 
