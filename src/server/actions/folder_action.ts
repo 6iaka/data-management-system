@@ -125,6 +125,7 @@ export const editFolder = async (payload: {
       name: valid.name,
     });
 
+    await driveService.renameItem(newFolder.googleId, payload.name);
     console.log("Folder created with success", newFolder.id);
 
     revalidatePath("/");
@@ -132,4 +133,11 @@ export const editFolder = async (payload: {
   } catch (error) {
     console.error(error);
   }
+};
+
+export const deleteFolder = async (id: number) => {
+  const deleted = await folderService.delete(id);
+  await driveService.deleteItem(deleted.googleId);
+  revalidatePath("/");
+  revalidatePath("/folder/:id", "page");
 };

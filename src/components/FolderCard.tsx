@@ -18,6 +18,18 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "~/components/ui/alert-dialog";
+import { deleteFolder } from "~/server/actions/folder_action";
 
 type Props = { data: Folder };
 
@@ -25,7 +37,7 @@ const FolderCard = ({ data }: Props) => {
   const router = useRouter();
   return (
     <Card
-      className="group relative flex min-w-[200px] cursor-pointer items-center justify-between gap-2 p-2.5 transition-all hover:bg-secondary"
+      className="group relative flex cursor-pointer items-center gap-2 p-2.5 transition-all hover:bg-secondary"
       onClick={() => router.push(`/folder/${data.id}`)}
     >
       <DropdownMenu>
@@ -55,7 +67,28 @@ const FolderCard = ({ data }: Props) => {
             </DialogContent>
           </Dialog>
 
-          <DropdownMenuItem>Delete</DropdownMenuItem>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                Delete
+              </DropdownMenuItem>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This will permanently delete
+                  your folder and remove its data from our servers.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={() => deleteFolder(data.id)}>
+                  Continue
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </DropdownMenuContent>
       </DropdownMenu>
 
@@ -66,7 +99,7 @@ const FolderCard = ({ data }: Props) => {
         width="100"
         height="100"
         viewBox="0 0 48 48"
-        className="size-14 transition-all group-hover:-translate-y-1"
+        className="size-14 flex-shrink-0 transition-all group-hover:-translate-y-1"
       >
         <path
           fill="#FFA000"
@@ -78,9 +111,8 @@ const FolderCard = ({ data }: Props) => {
         ></path>
       </svg>
 
-      <div className="flex flex-1 flex-col">
+      <div className="flex min-w-0 flex-col">
         <h3 className="line-clamp-1 text-sm font-semibold">{data.name}</h3>
-        <div className="flex items-center justify-between gap-2"></div>
         <p className="line-clamp-2 text-xs text-muted-foreground">
           {data.description}
         </p>
