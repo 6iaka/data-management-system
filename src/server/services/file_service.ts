@@ -42,9 +42,7 @@ export class FileService {
       await this.driveService.deleteItem(googleId);
 
       // Delete from database
-      await db.file.delete({
-        where: { googleId },
-      });
+      await db.file.delete({ where: { googleId } });
 
       return true;
     } catch (error) {

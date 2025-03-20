@@ -70,3 +70,10 @@ export const uploadFile = async ({
     console.error(error);
   }
 };
+
+export const deleteFile = async (id: number) => {
+  const deleted = await fileService.delete(id);
+  await driveService.deleteItem(deleted.googleId);
+  revalidatePath("/");
+  revalidatePath("/folder/:id", "page");
+};
