@@ -10,13 +10,12 @@ import {
 import { formatFileSize } from "~/lib/utils";
 import DynamicImage from "./DynamicImage";
 import { Button } from "./ui/button";
-import Image from "next/image";
 
 type Props = { file: File };
 
 const FileCard = ({ file }: Props) => {
   return (
-    <a download href={file.url} title={file.name}>
+    <a target="_blank" href={file.url} title={file.name}>
       <Card className="group relative flex flex-col items-center justify-center gap-4 p-4 transition-all hover:bg-secondary">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -33,7 +32,7 @@ const FileCard = ({ file }: Props) => {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {file?.previewLink ? (
+        {/* {file?.previewLink ? (
           <div className="h-14 w-full overflow-hidden rounded-md">
             <Image
               src={file?.previewLink || "/"}
@@ -45,8 +44,8 @@ const FileCard = ({ file }: Props) => {
             />
           </div>
         ) : (
-          <DynamicImage fileExtension={file.fileExtension} />
-        )}
+        )} */}
+        <DynamicImage fileExtension={file.fileExtension} />
 
         <div className="flex w-full flex-col gap-1">
           <p className="line-clamp-1 text-xs text-muted-foreground">

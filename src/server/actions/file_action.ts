@@ -40,8 +40,9 @@ export const uploadFile = async ({
         throw new Error("fileExtension is not found");
       if (!driveFile.mimeType) throw new Error("mimetype is not found");
       if (!driveFile.fileSize) throw new Error("fileSize is not found");
-      if (!driveFile.webContentLink) throw new Error("embedLink is not found");
-      if (!driveFile.webContentLink) throw new Error("embedLink is not found");
+      if (!driveFile.embedLink) throw new Error("embedLink is not found");
+      if (!driveFile.webContentLink)
+        throw new Error("webContentLink is not found");
       if (!driveFile.title) throw new Error("title is not found");
 
       const newFile = await fileService.upsert({
@@ -52,7 +53,7 @@ export const uploadFile = async ({
         googleId: driveFile.id,
         mimeType: driveFile.mimeType,
         size: Number(driveFile.fileSize),
-        url: driveFile.webContentLink,
+        url: driveFile.embedLink,
         previewLink: driveFile.thumbnailLink,
         tag: { connect: { name: tag } },
       });
