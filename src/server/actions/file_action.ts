@@ -77,3 +77,7 @@ export const deleteFile = async (id: number) => {
   revalidatePath("/");
   revalidatePath("/folder/:id", "page");
 };
+
+export const searchFile = async (query: string) => {
+  return await fileService.search(query);
+};

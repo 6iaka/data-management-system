@@ -70,6 +70,19 @@ export class FileService {
     }
   };
 
+  search = async (query: string) => {
+    return await db.file.findMany({
+      orderBy: {
+        _relevance: {
+          fields: ["name"],
+          search: query.replace(/\s+/g, " & "),
+          sort: "desc",
+        },
+      },
+      take: 25,
+    });
+  };
+
   /**
    * Move a file
    */

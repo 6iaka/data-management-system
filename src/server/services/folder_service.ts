@@ -34,6 +34,19 @@ export class FolderService {
     return await db.folder.findUnique({ where: { googleId } });
   };
 
+  search = async (query: string) => {
+    return await db.folder.findMany({
+      orderBy: {
+        _relevance: {
+          fields: ["name"],
+          search: query.replace(/\s+/g, " & "),
+          sort: "desc",
+        },
+      },
+      take: 25,
+    });
+  };
+
   getAll = async () => {
     return await db.folder.findMany();
   };

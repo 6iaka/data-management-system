@@ -141,3 +141,7 @@ export const deleteFolder = async (id: number) => {
   revalidatePath("/");
   revalidatePath("/folder/:id", "page");
 };
+
+export const searchFolder = async (query: string) => {
+  return await folderService.search(query);
+};
