@@ -70,14 +70,17 @@ export class FileService {
     }
   };
 
-  search = async (query: string) => {
+  search = async (payload: { query: string; tag?: string }) => {
     return await db.file.findMany({
       orderBy: {
         _relevance: {
           fields: ["name"],
-          search: query.replace(/\s+/g, " & "),
+          search: payload.query.replace(/\s+/g, " & "),
           sort: "desc",
         },
+      },
+      where: {
+        ...(payload.tag && { tag: { name: payload.tag } }),
       },
       take: 25,
     });

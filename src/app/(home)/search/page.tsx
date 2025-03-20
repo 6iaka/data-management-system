@@ -4,15 +4,14 @@ import { searchFile } from "~/server/actions/file_action";
 import { searchFolder } from "~/server/actions/folder_action";
 
 type Props = {
-  searchParams: Promise<{
-    query?: string;
-  }>;
+  searchParams: Promise<{ query?: string; tag?: string }>;
 };
 
 const SearchPage = async ({ searchParams }: Props) => {
   const query = (await searchParams).query;
+  const tag = (await searchParams).tag;
   const folders = await searchFolder(query || "");
-  const files = await searchFile(query || "");
+  const files = await searchFile({ query: query || "", tag });
 
   return (
     <main className="flex flex-col gap-4 p-4">

@@ -78,6 +78,6 @@ export const deleteFile = async (id: number) => {
   revalidatePath("/folder/:id", "page");
 };
 
-export const searchFile = async (query: string) => {
-  return await fileService.search(query);
+export const searchFile = async (payload: { query: string; tag?: string }) => {
+  return await fileService.search(payload);
 };
