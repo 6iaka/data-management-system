@@ -1,10 +1,9 @@
 "use client";
 
 import { Home, Search, Settings } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
+import DetailsSidebar from "~/components/DetailsSidebar";
 import Navbar from "~/components/Navbar";
-import SelectionActionBar from "~/components/SelectionActionBar";
 import { Button } from "~/components/ui/button";
 import { useSelection } from "~/hooks/use-selection";
 
@@ -44,25 +43,18 @@ const HomeLayout = ({ children }: Readonly<{ children: React.ReactNode }>) => {
               className="justify-start rounded-full"
             >
               <Link href={item.url}>
-                <span>{item.title}</span>
                 <item.icon />
+                <span>{item.title}</span>
               </Link>
             </Button>
           ))}
         </div>
 
-        <div className="flex h-full flex-col gap-4 rounded-3xl bg-secondary/20 p-4">
+        <div className="flex h-full flex-col gap-4 rounded-2xl bg-secondary/20 p-4">
           {children}
         </div>
 
-        <aside className="flex h-full flex-col items-center justify-center rounded-2xl bg-secondary/20">
-          <div className="flex max-w-[180px] flex-col items-center justify-center gap-4 text-balance text-center">
-            <Image src={"/filetype-raw.svg"} alt="" width={64} height={64} />
-            <p className="text-sm text-muted-foreground">
-              Select an item to see the details
-            </p>
-          </div>
-        </aside>
+        <DetailsSidebar />
       </section>
     </main>
   );

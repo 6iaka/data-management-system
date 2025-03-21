@@ -11,6 +11,10 @@ export const getAllFolders = async () => {
   return await folderService.getAll();
 };
 
+export const getFolderDetails = async (id: number) => {
+  return await folderService.findById(id);
+};
+
 export const createRootFolder = async () => {
   try {
     const user = await currentUser();

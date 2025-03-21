@@ -1,4 +1,4 @@
-import { Download, ExternalLink, Move, Trash, X } from "lucide-react";
+import { Download, Move, Trash, X } from "lucide-react";
 import { useSelection } from "~/hooks/use-selection";
 import { Button } from "./ui/button";
 
@@ -6,7 +6,10 @@ const SelectionActionBar = () => {
   const { items, resetItems } = useSelection((state) => state);
   if (items.length > 0)
     return (
-      <div className="flex items-center gap-4 rounded-full bg-secondary/50 p-1 text-sm">
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="flex items-center gap-4 rounded-full bg-secondary/50 p-1 text-sm"
+      >
         <Button
           variant={"ghost"}
           size={"icon"}
@@ -19,14 +22,6 @@ const SelectionActionBar = () => {
         <p>{items.length} selected</p>
 
         <div className="flex gap-1">
-          <Button
-            className="size-7 rounded-full"
-            variant={"ghost"}
-            size={"icon"}
-          >
-            <ExternalLink />
-          </Button>
-
           <Button
             className="size-7 rounded-full"
             variant={"ghost"}
