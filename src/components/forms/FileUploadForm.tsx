@@ -1,4 +1,5 @@
 "use client";
+
 import { useUser } from "@clerk/nextjs";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
@@ -7,6 +8,14 @@ import { notFound } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "~/components/ui/button";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "~/components/ui/command";
 import {
   Form,
   FormControl,
@@ -17,22 +26,14 @@ import {
   FormMessage,
 } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
-import { uploadFile } from "~/server/actions/file_action";
-import { getAllTags } from "~/server/actions/tag_action";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "~/components/ui/popover";
 import { cn } from "~/lib/utils";
-import {
-  Command,
-  CommandInput,
-  CommandList,
-  CommandEmpty,
-  CommandGroup,
-  CommandItem,
-} from "~/components/ui/command";
+import { uploadFile } from "~/server/actions/file_action";
+import { getAllTags } from "~/server/actions/tag_action";
 
 const formSchema = z.object({
   files: z.instanceof(FileList),
@@ -69,7 +70,7 @@ const FileUploadForm = ({ folderId }: Props) => {
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="flex flex-col gap-4"
+        className="flex flex-col gap-2"
       >
         <FormField
           name="files"

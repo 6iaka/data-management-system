@@ -31,7 +31,7 @@ export const createRootFolder = async () => {
 
     console.log("Root folder created", folder.id);
   } catch (error) {
-    console.error(error);
+    console.warn(error);
   }
 };
 

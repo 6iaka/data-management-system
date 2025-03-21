@@ -1,58 +1,66 @@
-import AppSidebar from "~/components/AppSidebar";
-import TooltipWrapper from "~/components/TooltipWrapper";
-import { Input } from "~/components/ui/input";
-import { SidebarProvider, SidebarTrigger } from "~/components/ui/sidebar";
-import { getAllTags } from "~/server/actions/tag_action";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "~/components/ui/select";
+import Navbar from "~/components/Navbar";
 
-export default async function HomeLayout({
-  children,
-}: Readonly<{ children: React.ReactNode }>) {
-  const tags = await getAllTags();
+import Image from "next/image";
+import { Home, Search, Settings } from "lucide-react";
+import Link from "next/link";
+import { Button } from "~/components/ui/button";
 
+const items = [
+  {
+    title: "Home",
+    url: "/",
+    icon: Home,
+  },
+  {
+    title: "Search",
+    url: "/search",
+    icon: Search,
+  },
+  {
+    title: "Settings",
+    url: "#",
+    icon: Settings,
+  },
+];
+
+const HomeLayout = ({ children }: Readonly<{ children: React.ReactNode }>) => {
   return (
-    <SidebarProvider>
-      <AppSidebar />
+    <main className="flex min-h-svh w-full flex-col">
+      <Navbar />
 
-      <main className="flex min-h-svh w-full flex-col">
-        <header className="flex w-full flex-col gap-4 border-b p-4 sm:flex-row">
-          <TooltipWrapper label="Toggle Sidebar">
-            <SidebarTrigger className="size-9 shrink-0" />
-          </TooltipWrapper>
+      <section className="grid flex-1 grid-cols-[256px,1fr,320px] gap-2 p-4">
+        <div className="flex flex-col gap-2">
+          {items.map((item) => (
+            <Button
+              key={item.title}
+              asChild
+              variant={"ghost"}
+              size={"sm"}
+              className="justify-start rounded-full"
+            >
+              <Link href={item.url}>
+                <item.icon />
+                <span>{item.title}</span>
+              </Link>
+            </Button>
+          ))}
+        </div>
 
-          <form action="/search" className="flex w-full flex-1 flex-wrap gap-2">
-            <Input
-              placeholder="Search"
-              className="min-w-[180px] flex-1 py-2 text-sm"
-              name="query"
-              minLength={1}
-              required
-              min={1}
-            />
+        <div className="flex h-full flex-col gap-4 rounded-3xl bg-secondary/20 p-4">
+          {children}
+        </div>
 
-            <Select name="tag">
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Tag" />
-              </SelectTrigger>
-              <SelectContent>
-                {tags.map((item) => (
-                  <SelectItem key={item.id} value={item.name}>
-                    {item.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </form>
-        </header>
-
-        <div className="flex flex-1 flex-col">{children}</div>
-      </main>
-    </SidebarProvider>
+        <aside className="flex h-full flex-col items-center justify-center rounded-2xl bg-secondary/20">
+          <div className="flex max-w-[180px] flex-col items-center justify-center gap-4 text-balance text-center">
+            <Image src={"/filetype-raw.svg"} alt="" width={64} height={64} />
+            <p className="text-sm text-muted-foreground">
+              Select an item to see the details
+            </p>
+          </div>
+        </aside>
+      </section>
+    </main>
   );
-}
+};
+
+export default HomeLayout;

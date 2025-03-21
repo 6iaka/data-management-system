@@ -32,10 +32,10 @@ const items = [
 
 const AppSidebar = () => {
   return (
-    <Sidebar>
-      <SidebarContent>
+    <Sidebar className="border-none">
+      <SidebarContent className="bg-background">
         <SidebarGroup>
-          <SidebarGroupLabel>Data Management System</SidebarGroupLabel>
+          <SidebarGroupLabel>Sodexo File Storage</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => (

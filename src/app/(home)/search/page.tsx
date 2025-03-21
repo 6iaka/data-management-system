@@ -16,7 +16,7 @@ const SearchPage = async ({ searchParams }: Props) => {
   return (
     <main className="flex flex-col gap-4 p-4">
       <h2 className="scroll-m-20 text-3xl font-semibold tracking-tight first:mt-0">
-        {query ? `"${query}": results` : "Search"}
+        {query ? `"${query}" results` : "Search"}
       </h2>
 
       <section className="flex flex-col gap-2 rounded-lg">
