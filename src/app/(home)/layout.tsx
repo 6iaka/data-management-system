@@ -32,7 +32,7 @@ const HomeLayout = ({ children }: Readonly<{ children: React.ReactNode }>) => {
     <main className="flex min-h-svh w-full flex-col" onClick={resetItems}>
       <Navbar />
 
-      <section className="grid flex-1 grid-cols-[256px,1fr,320px] gap-2 p-4">
+      <section className="grid flex-1 grid-cols-[250px,1fr,300px] gap-2 p-4">
         <div className="flex flex-col gap-2">
           {items.map((item) => (
             <Button
