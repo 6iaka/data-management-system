@@ -1,9 +1,12 @@
-import Navbar from "~/components/Navbar";
+"use client";
 
-import Image from "next/image";
 import { Home, Search, Settings } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
+import Navbar from "~/components/Navbar";
+import SelectionActionBar from "~/components/SelectionActionBar";
 import { Button } from "~/components/ui/button";
+import { useSelection } from "~/hooks/use-selection";
 
 const items = [
   {
@@ -24,23 +27,25 @@ const items = [
 ];
 
 const HomeLayout = ({ children }: Readonly<{ children: React.ReactNode }>) => {
+  const { resetItems } = useSelection((state) => state);
+
   return (
-    <main className="flex min-h-svh w-full flex-col">
+    <main className="flex min-h-svh w-full flex-col" onClick={resetItems}>
       <Navbar />
 
       <section className="grid flex-1 grid-cols-[256px,1fr,320px] gap-2 p-4">
         <div className="flex flex-col gap-2">
           {items.map((item) => (
             <Button
-              key={item.title}
               asChild
-              variant={"ghost"}
               size={"sm"}
+              key={item.title}
+              variant={"ghost"}
               className="justify-start rounded-full"
             >
               <Link href={item.url}>
-                <item.icon />
                 <span>{item.title}</span>
+                <item.icon />
               </Link>
             </Button>
           ))}

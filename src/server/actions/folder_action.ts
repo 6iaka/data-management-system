@@ -7,6 +7,10 @@ import { z } from "zod";
 import driveService from "../services/drive_service";
 import { revalidatePath } from "next/cache";
 
+export const getAllFolders = async () => {
+  return await folderService.getAll();
+};
+
 export const createRootFolder = async () => {
   try {
     const user = await currentUser();

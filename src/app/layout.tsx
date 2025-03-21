@@ -1,9 +1,9 @@
-import "~/styles/globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
-import { Karla as FontSans } from "next/font/google";
 import { type Metadata } from "next";
+import { Karla as FontSans } from "next/font/google";
 import NextTopLoader from "nextjs-toploader";
 import QueryProvider from "~/components/QueryProvider";
+import "~/styles/globals.css";
 
 export const metadata: Metadata = {
   title: "Sodexo Storage",
@@ -13,9 +13,9 @@ export const metadata: Metadata = {
 
 const fontSans = FontSans({
   weight: ["200", "300", "400", "500", "600", "700", "800"],
-  style: "normal",
   variable: "--font-karla",
   subsets: ["latin"],
+  style: "normal",
 });
 
 export default function RootLayout({

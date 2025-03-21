@@ -1,11 +1,14 @@
+"use client";
+import { useQuery } from "@tanstack/react-query";
 import FolderCard from "~/components/FolderCard";
-import TagContainer from "~/components/TagContainer";
-import { createRootFolder } from "~/server/actions/folder_action";
-import folderService from "~/server/services/folder_service";
+import SelectionActionBar from "~/components/SelectionActionBar";
+import { getAllFolders } from "~/server/actions/folder_action";
 
-const HomePage = async () => {
-  await createRootFolder();
-  const folders = await folderService.getAll();
+const HomePage = () => {
+  const { data } = useQuery({
+    queryKey: ["all-folders"],
+    queryFn: async () => getAllFolders(),
+  });
 
   return (
     <>
@@ -13,13 +16,13 @@ const HomePage = async () => {
         Dashboard
       </h2>
 
-      <TagContainer />
+      <SelectionActionBar />
 
       <section className="flex flex-col gap-2 rounded-lg">
         <h3 className="text-balance font-medium">Folders</h3>
         <div className="grid w-full grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-2">
-          {folders.length > 0 ? (
-            folders.map((item) => <FolderCard data={item} key={item.id} />)
+          {data && data.length > 0 ? (
+            data.map((item) => <FolderCard data={item} key={item.id} />)
           ) : (
             <p className="text-sm text-muted-foreground">No Folders Here</p>
           )}
