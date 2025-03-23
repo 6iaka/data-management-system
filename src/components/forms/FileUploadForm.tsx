@@ -29,7 +29,7 @@ import {
 import { Textarea } from "../ui/textarea";
 
 const formSchema = z.object({
-  files: z.array(z.instanceof(File)),
+  file: z.instanceof(File),
   tagName: z.string().optional(),
   description: z.string().min(1).optional(),
 });
@@ -48,13 +48,12 @@ const FileUploadForm = ({ folderId }: Props) => {
     resolver: zodResolver(formSchema),
     defaultValues: { tagName: "" },
   });
-  const fileRef = form.register("files");
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     const response = await uploadFile({
       description: values.description,
       tagName: values.tagName,
-      files: values.files,
+      file: values.file,
       folderId,
     });
 
@@ -79,7 +78,7 @@ const FileUploadForm = ({ folderId }: Props) => {
         className="flex flex-col gap-4"
       >
         <FormField
-          name="files"
+          name="file"
           control={form.control}
           render={() => (
             <FormItem className="flex flex-col">
@@ -89,7 +88,8 @@ const FileUploadForm = ({ folderId }: Props) => {
                   multiple={false}
                   dropZoneClassName="h-[150px]"
                   onDrop={(acceptedFiles: File[]) => {
-                    form.setValue("files", acceptedFiles);
+                    const file = acceptedFiles[0]!;
+                    form.setValue("file", file);
                   }}
                 >
                   {(dropzone: DropzoneState) => (

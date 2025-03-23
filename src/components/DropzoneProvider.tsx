@@ -1,7 +1,13 @@
 "use client";
-import { useCallback, type ReactNode } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
+import Image from "next/image";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { useDropzone } from "react-dropzone";
+import { useToast } from "~/hooks/use-toast";
 import { cn } from "~/lib/utils";
+import { uploadFiles } from "~/server/actions/file_action";
 
 const DropzoneProvider = ({
   children,
@@ -10,15 +16,40 @@ const DropzoneProvider = ({
   children: ReactNode;
   className?: string;
 }) => {
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    // Do something with the files
-    console.log(acceptedFiles);
-  }, []);
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
+  const { toast } = useToast();
+  const [files, setFiles] = useState<File[]>([]);
+  const pathname = usePathname();
 
-  return (
-    <div {...getRootProps()} className={cn(className)}>
-      {isDragActive ? (
+  const { mutate, isSuccess, isPending } = useMutation({
+    mutationKey: ["uploadFiles"],
+    mutationFn: async (payload: File[]) =>
+      await uploadFiles({
+        files: payload,
+        folderId: Number(/folder\/(\d+)/.exec(pathname)?.[1]),
+      }),
+  });
+
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    setFiles(acceptedFiles);
+    mutate(acceptedFiles);
+  }, []);
+
+  const { getRootProps, getInputProps, isDragActive, acceptedFiles } =
+    useDropzone({ onDrop });
+
+  useEffect(() => {
+    if (!isPending && isSuccess) {
+      toast({
+        title: "Success",
+        description: "Files uploaded",
+      });
+      setFiles([]);
+    }
+  }, [isSuccess, isPending]);
+
+  if (isDragActive)
+    return (
+      <div {...getRootProps()} className={cn(className)}>
         <div className="flex h-full flex-1 items-center justify-center rounded-md border-2 border-primary bg-secondary">
           <input {...getInputProps()} />
 
@@ -43,8 +74,27 @@ const DropzoneProvider = ({
             <p>Drop files here to upload</p>
           </div>
         </div>
+      </div>
+    );
+
+  return (
+    <div {...getRootProps()} className={cn(className)}>
+      {files.length > 0 ? (
+        <div
+          className={cn(
+            "flex h-full flex-1 items-center justify-center rounded-md border-2 border-primary",
+            className,
+          )}
+        >
+          <div className="flex max-w-[200px] flex-col items-center justify-center gap-2 text-balance text-center">
+            <Loader2 className="animate-spin" />
+            <p className="text-sm">
+              Your files are being uploaded. Please do not leave this page.
+            </p>
+          </div>
+        </div>
       ) : (
-        <>{children}</>
+        children
       )}
     </div>
   );

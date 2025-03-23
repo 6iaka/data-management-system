@@ -30,7 +30,7 @@ const FolderPage = async ({ params }: Props) => {
 
   return (
     <>
-      <header className="flex flex-col gap-2 p-4">
+      <header className="flex flex-col gap-2 p-4 pb-0">
         <div className="flex flex-1 items-start justify-between gap-2">
           {data.parentId ? (
             <Button variant={"secondary"} asChild>
@@ -87,7 +87,7 @@ const FolderPage = async ({ params }: Props) => {
         <SelectionActionBar />
       </header>
 
-      <DropzoneProvider className="flex h-full flex-1 flex-col gap-4 overflow-y-auto px-4 pb-4">
+      <DropzoneProvider className="flex h-full flex-1 flex-col gap-4 overflow-y-auto p-4">
         <section className="flex flex-col gap-2 rounded-lg">
           <h3 className="text-balance font-medium">Folders</h3>
           <div className="grid w-full grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-2">

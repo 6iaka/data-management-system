@@ -7,14 +7,55 @@ import fileService from "../services/file_service";
 import folderService from "../services/folder_service";
 import type { File as FileData } from "@prisma/client";
 
-export const uploadFile = async ({
+export const uploadFiles = async ({
   files,
+  folderId,
+}: {
+  files: File[];
+  folderId?: number | null;
+}): Promise<ApiResponse<any>> => {
+  try {
+    const user = await currentUser();
+    if (!user) throw new Error("Not authorized");
+
+    const uploadPromise = files.map(async (file) => {
+      const uploaded = uploadFile({ file, folderId });
+      return uploaded;
+    });
+    const upload = await Promise.allSettled(uploadPromise);
+    const results = upload.map((item) => {
+      if (item.status === "rejected") {
+        return { success: false, error: item.reason };
+      } else {
+        return { success: false, data: item.value };
+      }
+    });
+
+    revalidatePath("/");
+    revalidatePath("/folder/:id", "page");
+
+    return { success: true, data: results };
+  } catch (error) {
+    // Error handling
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error occurred";
+    console.error("File upload failed:", errorMessage);
+
+    return {
+      success: false,
+      error: errorMessage,
+    };
+  }
+};
+
+export const uploadFile = async ({
+  file,
   folderId,
   tagName,
   description,
 }: {
-  files: File[];
-  folderId?: number;
+  file: File;
+  folderId?: number | null;
   tagName?: string;
   description?: string;
 }): Promise<ApiResponse<FileData>> => {
@@ -30,7 +71,7 @@ export const uploadFile = async ({
 
     const driveFile = await driveService.uploadFile({
       folderId: rootFolderId,
-      file: files[0]!,
+      file: file,
     });
     driveFileId = driveFile.id!;
 
@@ -74,6 +115,38 @@ export const uploadFile = async ({
       success: false,
       error: errorMessage,
     };
+  }
+};
+
+export const deleteFiles = async (ids: number[]): Promise<ApiResponse<any>> => {
+  try {
+    const user = await currentUser();
+    if (!user) throw new Error("Not authorized");
+
+    const deletePromise = ids.map(async (id) => {
+      const deleted = deleteFile(id);
+      return deleted;
+    });
+    const deleted = await Promise.allSettled(deletePromise);
+    const results = deleted.map((item) => {
+      if (item.status === "rejected") {
+        return { success: false, error: item.reason };
+      } else {
+        return { success: false, data: item.value };
+      }
+    });
+
+    revalidatePath("/");
+    revalidatePath("/folder/:id", "page");
+
+    return { success: true, data: results };
+  } catch (error) {
+    // Error handling
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error occurred";
+    console.error("File upload failed:", errorMessage);
+
+    return { success: false, error: errorMessage };
   }
 };
 

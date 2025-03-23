@@ -30,7 +30,6 @@ type Props = { data: File };
 const FileCard = ({ data }: Props) => {
   const { toggleSelect, items } = useSelection((state) => state);
   const isSelected = items.find((item) => item.googleId === data.googleId);
-  console.log(data);
 
   return (
     <Card
