@@ -6,6 +6,8 @@ import FileCard from "~/components/FileCard";
 import FolderCard from "~/components/FolderCard";
 import CreateFolderForm from "~/components/forms/CreateFolderForm";
 import FileUploadForm from "~/components/forms/FileUploadForm";
+import Dropzone from "shadcn-dropzone";
+
 import SelectionActionBar from "~/components/SelectionActionBar";
 import { Button } from "~/components/ui/button";
 import {
@@ -15,7 +17,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "~/components/ui/dialog";
-import driveService from "~/server/services/drive_service";
 import folderService from "~/server/services/folder_service";
 
 type Props = { params: Promise<{ id: string }> };
@@ -27,23 +28,19 @@ const FolderPage = async ({ params }: Props) => {
   const data = await folderService.findById(id);
   if (!data) notFound();
 
-  const folders = await driveService.getFolderDetails(data.googleId);
-
   return (
     <>
-      {JSON.stringify(folders)}
-
-      <header className="flex flex-col gap-2">
+      <header className="flex flex-col gap-2 p-4">
         <div className="flex flex-1 items-start justify-between gap-2">
           {data.parentId ? (
-            <Button variant={"outline"} asChild>
+            <Button variant={"secondary"} asChild>
               <Link href={`/folder/${data.parentId}`}>
                 <ChevronLeft />
                 Back
               </Link>
             </Button>
           ) : (
-            <Button variant={"ghost"} className="rounded-full" asChild>
+            <Button variant={"secondary"} className="rounded-full" asChild>
               <Link href={"/"}>
                 <ChevronLeft />
                 Dashboard
@@ -86,13 +83,11 @@ const FolderPage = async ({ params }: Props) => {
             </Dialog>
           </div>
         </div>
-
         <h2 className="text-xl font-bold">{data.title}</h2>
+        <SelectionActionBar />
       </header>
 
-      <SelectionActionBar />
-
-      <DropzoneProvider>
+      <DropzoneProvider className="flex h-full flex-1 flex-col gap-4 overflow-y-auto px-4 pb-4">
         <section className="flex flex-col gap-2 rounded-lg">
           <h3 className="text-balance font-medium">Folders</h3>
           <div className="grid w-full grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-2">

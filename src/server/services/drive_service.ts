@@ -1,7 +1,7 @@
 "server only";
 import { google } from "googleapis";
-import { Readable } from "stream";
 import { env } from "~/env";
+import { Readable, PassThrough } from "stream";
 
 export class DriveService {
   private auth = new google.auth.GoogleAuth({
@@ -27,11 +27,9 @@ export class DriveService {
   uploadFile = async ({
     file,
     folderId,
-    onProgress,
   }: {
     file: File;
     folderId?: string;
-    onProgress?: (event: { bytesRead: number; totalBytes: number }) => void;
   }) => {
     try {
       if (!file) throw new Error("No file provided");
@@ -40,47 +38,20 @@ export class DriveService {
       const buffer = Buffer.from(arrayBuffer);
       const stream = Readable.from(buffer);
 
-      const fileMetadata = {};
-      const media = {
-        body: stream,
-        mimeType: file.type,
-        chunkSize: 256 * 1024,
-      };
-
-      const totalBytes = file.size;
-      const response = await this.drive.files.create(
-        {
-          requestBody: {
-            // title: file.name,
-            // parents: folderId ? [{ id: folderId }] : [{ id: "root" }],
-            mimeType: file.type,
-            name: file.name,
-          },
-          supportsAllDrives: true,
-          uploadType: "multipart",
-          media: {
-            mimeType: file.type,
-            body: stream,
-          },
+      const response = await this.drive.files.create({
+        requestBody: {
+          parents: [folderId || "root"],
+          mimeType: file.type,
+          name: file.name,
         },
-        {
-          onUploadProgress: (e) => {
-            onProgress?.({
-              bytesRead: e.bytesRead,
-              totalBytes,
-            });
-          },
-          retry: true,
-          retryConfig: {
-            retry: 3,
-            onRetryAttempt: (err) => {
-              console.log("Retrying upload after error:", err);
-            },
-          },
-          maxRedirects: 0,
-          maxContentLength: Infinity,
+        supportsAllDrives: true,
+        uploadType: "resumable",
+        media: {
+          mimeType: file.type,
+          body: stream,
         },
-      );
+        fields: "*",
+      });
 
       await this.drive.permissions.create({
         fileId: response.data.id!,
@@ -99,15 +70,12 @@ export class DriveService {
 
   createFolder = async (name: string, parentId?: string) => {
     try {
-      const fileMetadata = {
-        title: name,
-        mimeType: "application/vnd.google-apps.folder",
-        parents: parentId ? [{ id: parentId }] : [{ id: "root" }],
-      };
-
-      const response = await this.drive.files.insert({
-        requestBody: fileMetadata,
-        fields: "id,title,mimeType,parents",
+      const response = await this.drive.files.create({
+        requestBody: {
+          parents: parentId ? [parentId] : ["root"],
+          mimeType: "application/vnd.google-apps.folder",
+          name,
+        },
       });
 
       return response.data;
@@ -124,7 +92,7 @@ export class DriveService {
         fields: "items(id,title,parents,mimeType)",
       });
 
-      const folders = response.data.items ?? [];
+      const folders = response.data.files ?? [];
 
       const rootFolder = folders.find(
         (folder) => !folder.parents || folder.parents.length === 0,
@@ -141,9 +109,8 @@ export class DriveService {
   getFolderContent = async (folderId: string) => {
     const response = await this.drive.files.list({
       q: `'${folderId}' in parents`,
-      // fields: "items(id,title,mimeType,fileSize)",
     });
-    const data = response.data.items ?? [];
+    const data = response.data.files ?? [];
 
     const contents = {
       folders: data.filter(
@@ -158,11 +125,8 @@ export class DriveService {
   };
 
   getFolderDetails = async (id: string) => {
-    const response = await this.drive.files.get({
-      fileId: id,
-    });
+    const response = await this.drive.files.get({ fileId: id });
     const folder = response.data;
-    return folder;
 
     if (!folder.id) return null;
 
@@ -183,9 +147,8 @@ export class DriveService {
           fields: "parents,title",
         });
 
-        const title = folder.data.title;
-        const parentId = folder.data.parents?.[0]?.id;
-
+        const title = folder.data.name;
+        const parentId = folder.data.parents?.[0];
         if (!parentId) break;
 
         path.unshift({ id: currentId, title: title ?? "Unknown" });
@@ -209,12 +172,10 @@ export class DriveService {
    */
   moveItem = async (fileId: string, newParentId: string) => {
     try {
-      // Remove from current parent and add to new parent
-      const response = await this.drive.files.patch({
-        fileId,
-        removeParents: "root", // Will remove from all current parents
+      const response = await this.drive.files.update({
+        removeParents: "root",
         addParents: newParentId,
-        fields: "id, parents",
+        fileId,
       });
 
       return response.data;
@@ -228,14 +189,10 @@ export class DriveService {
    */
   renameItem = async (fileId: string, newName: string) => {
     try {
-      const response = await this.drive.files.patch({
+      const response = await this.drive.files.update({
+        requestBody: { name: newName },
         fileId,
-        requestBody: {
-          title: newName,
-        },
-        fields: "id,title",
       });
-
       return response.data;
     } catch (error) {
       throw new Error(`Failed to rename item: ${(error as Error).message}`);

@@ -2,7 +2,6 @@
 import type { File } from "@prisma/client";
 import { EllipsisVertical } from "lucide-react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,9 +28,9 @@ import { Button } from "./ui/button";
 type Props = { data: File };
 
 const FileCard = ({ data }: Props) => {
-  const router = useRouter();
   const { toggleSelect, items } = useSelection((state) => state);
   const isSelected = items.find((item) => item.googleId === data.googleId);
+  console.log(data);
 
   return (
     <Card
@@ -39,7 +38,7 @@ const FileCard = ({ data }: Props) => {
         "group relative flex flex-col items-center gap-2.5 p-4 transition-all hover:bg-secondary/25",
         isSelected && "bg-[#2D336B] hover:bg-[#2D336B]",
       )}
-      onDoubleClick={() => router.push(`/folder/${data.id}`)}
+      onDoubleClick={() => (window.location.href = data.webViewLink)}
       onClick={(e) => {
         e.stopPropagation();
         toggleSelect({ googleId: data.googleId, id: data.id, type: "file" });
@@ -57,6 +56,11 @@ const FileCard = ({ data }: Props) => {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem>Edit</DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <a href={data.webContentLink} download>
+              Download
+            </a>
+          </DropdownMenuItem>
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <DropdownMenuItem onSelect={(e) => e.preventDefault()}>

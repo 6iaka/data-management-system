@@ -7,27 +7,17 @@ import fileService from "../services/file_service";
 import folderService from "../services/folder_service";
 import type { File as FileData } from "@prisma/client";
 
-type ReturnType<T> =
-  | {
-      success: true;
-      data: T;
-    }
-  | {
-      success: false;
-      error: string;
-    };
-
 export const uploadFile = async ({
   files,
   folderId,
   tagName,
   description,
 }: {
-  files: FileList;
+  files: File[];
   folderId?: number;
   tagName?: string;
   description?: string;
-}): Promise<ReturnType<FileData>> => {
+}): Promise<ApiResponse<FileData>> => {
   let driveFileId: string = "";
 
   try {
@@ -41,12 +31,6 @@ export const uploadFile = async ({
     const driveFile = await driveService.uploadFile({
       folderId: rootFolderId,
       file: files[0]!,
-      onProgress: (progress) => {
-        // Update UI with progress
-        console.log(
-          `Upload ${(progress.bytesRead / progress.totalBytes) * 100}%`,
-        );
-      },
     });
     driveFileId = driveFile.id!;
 
@@ -58,14 +42,10 @@ export const uploadFile = async ({
       webContentLink: driveFile.webContentLink!,
       fileExtension: driveFile.fileExtension!,
       thumbnailLink: driveFile.thumbnailLink,
-      fileSize: Number(driveFile.fileSize),
-      downloadUrl: driveFile.downloadUrl!,
-      md5Checksum: driveFile.md5Checksum!,
-      embedLink: driveFile.embedLink!,
+      webViewLink: driveFile.webViewLink!,
+      fileSize: Number(driveFile.size),
       mimeType: driveFile.mimeType!,
-      selfLink: driveFile.selfLink!,
-      version: driveFile.version!,
-      title: driveFile.title!,
+      title: driveFile.name!,
       googleId: driveFile.id!,
       userClerkId: user.id,
       description,
@@ -97,7 +77,9 @@ export const uploadFile = async ({
   }
 };
 
-export const deleteFile = async (id: number): Promise<ReturnType<FileData>> => {
+export const deleteFile = async (
+  id: number,
+): Promise<ApiResponse<FileData>> => {
   try {
     const deletedFile = await fileService.deleteFile(id);
     await driveService.deleteItem(deletedFile.googleId);
@@ -118,7 +100,7 @@ export const deleteFile = async (id: number): Promise<ReturnType<FileData>> => {
 
 export const searchFile = async (
   query: string,
-): Promise<ReturnType<FileData[]>> => {
+): Promise<ApiResponse<FileData[]>> => {
   try {
     const results = await fileService.searchFile(query);
     return { success: true, data: results };

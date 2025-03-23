@@ -1,11 +1,10 @@
 "use server";
 
 import { currentUser } from "@clerk/nextjs/server";
-import folderService from "../services/folder_service";
-import { getRootData } from "./drive_action";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import driveService from "../services/drive_service";
-import { revalidatePath } from "next/cache";
+import folderService from "../services/folder_service";
 
 export const getAllFolders = async () => {
   return await folderService.getAll();
@@ -20,26 +19,15 @@ export const createRootFolder = async () => {
     const user = await currentUser();
     if (!user) throw new Error("Not autorized");
 
-    const data = await getRootData();
-    if (!data) throw new Error("Root folder data not found");
-
-    const rootFolder = data.rootFolder;
-    if (!rootFolder.id) throw new Error("No GoogleID found");
-
-    const folderExists = await folderService.findByGoogleId(rootFolder.id);
-    if (folderExists) throw new Error("Root folder already exists");
-
     const folder = await folderService.upsert({
-      googleId: rootFolder.id,
-      userClerkId: user.id,
-      title: "Root",
       description: "Main folder of the project.",
+      userClerkId: user.id,
+      googleId: "root",
+      title: "Root",
       isRoot: true,
     });
-
-    console.log("Root folder created", folder.id);
   } catch (error) {
-    console.warn(error);
+    return {};
   }
 };
 

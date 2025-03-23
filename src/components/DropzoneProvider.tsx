@@ -1,8 +1,15 @@
 "use client";
 import { useCallback, type ReactNode } from "react";
 import { useDropzone } from "react-dropzone";
+import { cn } from "~/lib/utils";
 
-const DropzoneProvider = ({ children }: { children: ReactNode }) => {
+const DropzoneProvider = ({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) => {
   const onDrop = useCallback((acceptedFiles: File[]) => {
     // Do something with the files
     console.log(acceptedFiles);
@@ -10,7 +17,7 @@ const DropzoneProvider = ({ children }: { children: ReactNode }) => {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
 
   return (
-    <div {...getRootProps()} className="flex h-full flex-col gap-4">
+    <div {...getRootProps()} className={cn(className)}>
       {isDragActive ? (
         <div className="flex h-full flex-1 items-center justify-center rounded-md border-2 border-primary bg-secondary">
           <input {...getInputProps()} />
@@ -37,7 +44,7 @@ const DropzoneProvider = ({ children }: { children: ReactNode }) => {
           </div>
         </div>
       ) : (
-        children
+        <>{children}</>
       )}
     </div>
   );

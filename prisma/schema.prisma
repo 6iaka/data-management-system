@@ -52,18 +52,14 @@ model File {
     description String?
 
     // Links
+    webViewLink    String
     webContentLink String
-    embedLink      String
-    selfLink       String
-    downloadUrl    String
     thumbnailLink  String?
     iconLink       String
 
     // File details
     fileSize         Int
-    md5Checksum      String
     fileExtension    String
-    version          String
     originalFilename String
     trashed          Boolean? @default(false)
 

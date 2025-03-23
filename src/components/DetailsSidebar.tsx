@@ -7,6 +7,7 @@ import { useSelection } from "~/hooks/use-selection";
 import { getFolderDetails } from "~/server/actions/folder_action";
 import { Button } from "./ui/button";
 import { Textarea } from "./ui/textarea";
+import { ScrollArea } from "./ui/scroll-area";
 
 const DetailsSidebar = () => {
   const { items, setIsOpen } = useSelection((state) => state);
@@ -20,7 +21,7 @@ const DetailsSidebar = () => {
   const [description, setDescription] = useState("");
 
   return (
-    <aside
+    <div
       onClick={(e) => e.stopPropagation()}
       className="flex min-w-[300px] flex-col overflow-y-auto rounded-2xl bg-secondary/20"
     >
@@ -88,7 +89,7 @@ const DetailsSidebar = () => {
           </p>
         </div>
       )}
-    </aside>
+    </div>
   );
 };
 
