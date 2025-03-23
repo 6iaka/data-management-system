@@ -5,7 +5,7 @@ import { HelpCircle, LayoutGrid, Settings } from "lucide-react";
 
 const Navbar = () => {
   return (
-    <nav className="flex h-[72px] justify-between gap-4 p-4">
+    <nav className="flex h-[70px] items-center justify-between gap-4 border-b p-4">
       <Link
         href="/"
         className="flex items-center justify-between gap-2 text-xl"

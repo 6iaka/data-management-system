@@ -1,83 +1,133 @@
 "use server";
 
 import { currentUser } from "@clerk/nextjs/server";
-import type { Extension } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import driveService from "../services/drive_service";
 import fileService from "../services/file_service";
-import { getRootData } from "./drive_action";
 import folderService from "../services/folder_service";
+import type { File as FileData } from "@prisma/client";
+
+type ReturnType<T> =
+  | {
+      success: true;
+      data: T;
+    }
+  | {
+      success: false;
+      error: string;
+    };
 
 export const uploadFile = async ({
   files,
   folderId,
-  tag,
+  tagName,
+  description,
 }: {
   files: FileList;
   folderId?: number;
-  tag: string;
-}) => {
+  tagName?: string;
+  description?: string;
+}): Promise<ReturnType<FileData>> => {
+  let driveFileId: string = "";
+
   try {
     const user = await currentUser();
     if (!user) throw new Error("Not authorized");
 
-    if (!tag || tag.trim() === "") throw new Error("Tag is required");
-
     const rootFolderId = folderId
       ? (await folderService.findById(folderId))?.googleId
-      : (await getRootData())?.rootFolder.id;
-    if (!rootFolderId) return null;
+      : undefined;
 
     const driveFile = await driveService.uploadFile({
       folderId: rootFolderId,
       file: files[0]!,
+      onProgress: (progress) => {
+        // Update UI with progress
+        console.log(
+          `Upload ${(progress.bytesRead / progress.totalBytes) * 100}%`,
+        );
+      },
     });
-    if (!driveFile.id) throw new Error("GoogleId is not found");
-    console.log(driveFile);
+    driveFileId = driveFile.id!;
 
-    try {
-      if (!driveFile.fileExtension)
-        throw new Error("fileExtension is not found");
-      if (!driveFile.mimeType) throw new Error("mimetype is not found");
-      if (!driveFile.fileSize) throw new Error("fileSize is not found");
-      if (!driveFile.embedLink) throw new Error("embedLink is not found");
-      if (!driveFile.webContentLink)
-        throw new Error("webContentLink is not found");
-      if (!driveFile.title) throw new Error("title is not found");
+    const newFile = await fileService.upsertFile({
+      ...(tagName && { tag: { connect: { name: tagName } } }),
+      iconLink: driveFile.iconLink?.replace("16", "64")!,
+      folder: { connect: { googleId: rootFolderId } },
+      originalFilename: driveFile.originalFilename!,
+      webContentLink: driveFile.webContentLink!,
+      fileExtension: driveFile.fileExtension!,
+      thumbnailLink: driveFile.thumbnailLink,
+      fileSize: Number(driveFile.fileSize),
+      downloadUrl: driveFile.downloadUrl!,
+      md5Checksum: driveFile.md5Checksum!,
+      embedLink: driveFile.embedLink!,
+      mimeType: driveFile.mimeType!,
+      selfLink: driveFile.selfLink!,
+      version: driveFile.version!,
+      title: driveFile.title!,
+      googleId: driveFile.id!,
+      userClerkId: user.id,
+      description,
+    });
 
-      const newFile = await fileService.upsert({
-        name: driveFile.title,
-        userClerkId: user.id,
-        fileExtension: driveFile.fileExtension as Extension,
-        folder: { connect: { googleId: rootFolderId } },
-        googleId: driveFile.id,
-        mimeType: driveFile.mimeType,
-        size: Number(driveFile.fileSize),
-        url: driveFile.embedLink,
-        previewLink: driveFile.thumbnailLink,
-        tag: { connect: { name: tag } },
-      });
+    revalidatePath("/");
+    revalidatePath("/folder/:id", "page");
 
-      console.log("File created with success", newFile.id);
-
-      revalidatePath("/");
-      revalidatePath("/folder/:id", "page");
-    } catch (error) {
-      await driveService.deleteItem(driveFile.id);
-      console.error(error);
-    }
+    return { success: true, data: newFile };
   } catch (error) {
-    console.error(error);
+    // Drive clean up
+    if (driveFileId) {
+      try {
+        await driveService.deleteItem(driveFileId);
+      } catch (deleteError) {
+        console.error("Failed to cleanup drive file:", deleteError);
+      }
+    }
+
+    // Error handling
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error occurred";
+    console.error("File upload failed:", errorMessage);
+
+    return {
+      success: false,
+      error: errorMessage,
+    };
   }
 };
 
-export const deleteFile = async (id: number) => {
-  const deleted = await fileService.delete(id);
-  await driveService.deleteItem(deleted.googleId);
-  revalidatePath("/");
-  revalidatePath("/folder/:id", "page");
+export const deleteFile = async (id: number): Promise<ReturnType<FileData>> => {
+  try {
+    const deletedFile = await fileService.deleteFile(id);
+    await driveService.deleteItem(deletedFile.googleId);
+
+    revalidatePath("/");
+    revalidatePath("/folder/:id", "page");
+
+    return { success: true, data: deletedFile };
+  } catch (error) {
+    // Error handling
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error occurred";
+    console.error("File upload failed:", errorMessage);
+
+    return { success: false, error: errorMessage };
+  }
 };
 
-export const searchFile = async (payload: { query: string; tag?: string }) => {
-  return await fileService.search(payload);
+export const searchFile = async (
+  query: string,
+): Promise<ReturnType<FileData[]>> => {
+  try {
+    const results = await fileService.searchFile(query);
+    return { success: true, data: results };
+  } catch (error) {
+    // Error handling
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error occurred";
+    console.error("File upload failed:", errorMessage);
+
+    return { success: false, error: errorMessage };
+  }
 };

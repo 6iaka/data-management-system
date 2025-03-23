@@ -9,9 +9,8 @@ type Props = {
 
 const SearchPage = async ({ searchParams }: Props) => {
   const query = (await searchParams).query;
-  const tag = (await searchParams).tag;
   const folders = await searchFolder(query || "");
-  const files = await searchFile({ query: query || "", tag });
+  const filesResponse = await searchFile(query || "");
 
   return (
     <main className="flex flex-col gap-4 p-4">
@@ -30,17 +29,21 @@ const SearchPage = async ({ searchParams }: Props) => {
         </div>
       </section>
 
-      <section className="flex flex-col gap-2 rounded-lg">
-        <h3 className="text-balance font-medium">Files</h3>
+      {filesResponse.success && (
+        <section className="flex flex-col gap-2 rounded-lg">
+          <h3 className="text-balance font-medium">Files</h3>
 
-        <div className="grid w-full grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-2">
-          {files.length > 0 ? (
-            files.map((item) => <FileCard file={item} key={item.id} />)
-          ) : (
-            <p className="text-sm text-muted-foreground">No Files Here</p>
-          )}
-        </div>
-      </section>
+          <div className="grid w-full grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-2">
+            {filesResponse.data.length > 0 ? (
+              filesResponse.data.map((item) => (
+                <FileCard data={item} key={item.id} />
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground">No Files Here</p>
+            )}
+          </div>
+        </section>
+      )}
     </main>
   );
 };

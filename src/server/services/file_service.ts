@@ -1,110 +1,90 @@
 "server only";
 
-import type { Prisma } from "@prisma/client";
+import type { File as FileData, Prisma } from "@prisma/client";
 import { db } from "../db";
-import { DriveService } from "./drive_service";
 
 export class FileService {
-  private driveService: DriveService;
-
-  constructor() {
-    this.driveService = new DriveService();
-  }
-
+  /**
+   * Find a file by ID
+   * @param id ID of the file to be found
+   * @returns Details of the file
+   */
   findById = async (id: number) => {
-    return await db.file.findUnique({
-      where: { id },
-      include: { folder: true },
-    });
-  };
-
-  getAll = async () => await db.file.findMany();
-
-  upsert = async (insertData: Prisma.FileCreateInput) => {
-    return await db.file.upsert({
-      where: { googleId: insertData.googleId },
-      create: insertData,
-      update: insertData,
-    });
-  };
-
-  delete = async (id: number) => {
-    const deleted = await db.file.delete({ where: { id } });
-    return deleted;
+    try {
+      const file = await db.file.findUnique({
+        where: { id },
+        include: { folder: true, tag: true },
+      });
+      return file;
+    } catch (error) {
+      throw new Error(`Failed to find file: ${(error as Error).message}`);
+    }
   };
 
   /**
-   * Delete a file
+   * Get Files from the database
+   * @returns List of the 30 latest files in the database
    */
-  deleteFile = async (googleId: string) => {
+  findMany = async () => {
     try {
-      // Delete from Drive
-      await this.driveService.deleteItem(googleId);
+      const files = await db.file.findMany({
+        include: { tag: true },
+        orderBy: { createdAt: "desc" },
+        take: 30,
+      });
+      return files;
+    } catch (error) {
+      throw new Error(`Failed to get all files: ${(error as Error).message}`);
+    }
+  };
 
-      // Delete from database
-      await db.file.delete({ where: { googleId } });
+  /**
+   * Upsert a file to the database
+   * @param insertData File creation parameters including metadata
+   * @returns Created or Updated file
+   */
+  upsertFile = async (insertData: Prisma.FileCreateInput) => {
+    try {
+      return await db.file.upsert({
+        where: { googleId: insertData.googleId },
+        create: insertData,
+        update: insertData,
+      });
+    } catch (error) {
+      throw new Error(`Failded to upsert file: ${(error as Error).message}`);
+    }
+  };
 
-      return true;
+  /**
+   * Delete a file from the database
+   * @param id ID of the file to be deleted
+   * @returns Metadata of the deleted file
+   */
+  deleteFile = async (id: number) => {
+    try {
+      const deleted = await db.file.delete({ where: { id } });
+      return deleted;
     } catch (error) {
       throw new Error(`Failed to delete file: ${(error as Error).message}`);
     }
   };
 
   /**
-   * Rename a file
+   * Search a file in the database based on a query
+   * @param query Query parameter to search the file
+   * @returns Array of results based on the query
    */
-  renameFile = async (googleId: string, newName: string) => {
+  searchFile = async (query: string) => {
+    // TO: CREATE EXTENSION IF NOT EXISTS pg_trgm;
     try {
-      // Rename in Drive
-      await this.driveService.renameItem(googleId, newName);
+      const results = await db.$queryRaw`
+        SELECT GREATEST(SIMILARITY(title, ${query}), SIMILARITY("originalFilename", ${query})) AS score, "File".*
+        FROM "File" WHERE SIMILARITY(title, ${query}) > 0.14 OR SIMILARITY("originalFilename", ${query}) > 0.14
+        ORDER BY score DESC LIMIT 40;`;
 
-      // Update in database
-      const file = await db.file.update({
-        where: { googleId },
-        data: { name: newName },
-      });
-
-      return file;
+      return results as FileData[];
     } catch (error) {
-      throw new Error(`Failed to rename file: ${(error as Error).message}`);
-    }
-  };
-
-  search = async (payload: { query: string; tag?: string }) => {
-    return await db.file.findMany({
-      orderBy: {
-        _relevance: {
-          fields: ["name"],
-          search: payload.query.replace(/\s+/g, " & "),
-          sort: "desc",
-        },
-      },
-      where: {
-        ...(payload.tag && { tag: { name: payload.tag } }),
-      },
-      take: 25,
-    });
-  };
-
-  /**
-   * Move a file
-   */
-  moveFile = async (googleId: string, newFolderId: string) => {
-    try {
-      // Move in Drive
-      await this.driveService.moveItem(googleId, newFolderId);
-
-      // Update in database
-      const file = await db.file.update({
-        where: { googleId },
-        data: {
-          folder: { connect: { googleId: newFolderId } },
-        },
-      });
-
-      return file;
-    } catch (error) {
-      throw new Error(`Failed to move file: ${(error as Error).message}`);
+      throw new Error(`Failed to search file: ${(error as Error).message}`);
     }
   };
 }

@@ -1,4 +1,5 @@
 import type {} from "@redux-devtools/extension";
+import { Dispatch, SetStateAction } from "react";
 import { create } from "zustand";
 
 type Item = {
@@ -9,28 +10,32 @@ type Item = {
 
 interface SelectionState {
   items: Item[];
-  toggleSelect: (item: Item) => void;
-  removeItem: (id: number) => void;
+  isOpen: boolean;
   resetItems: () => void;
+  removeItem: (googleId: string) => void;
+  toggleSelect: (item: Item) => void;
+  setIsOpen: (value: boolean) => void;
 }
 
 export const useSelection = create<SelectionState>()((set) => ({
   items: [],
+  isOpen: true,
   resetItems: () => set(() => ({ items: [] })),
+  setIsOpen: (value) => set(() => ({ isOpen: value })),
   toggleSelect: (item) =>
     set((state) => {
-      const exists = state.items.find((i) => i.id === item.id);
-      if (exists) {
-        return { items: state.items.filter((i) => i.id !== item.id) };
-      }
+      const exists = state.items.find((i) => i.googleId === item.googleId);
+      if (exists) return { items: state.items.filter((i) => i.id !== item.id) };
       return { items: [...state.items, item] };
     }),
-  removeItem: (id) =>
+  removeItem: (googleId) =>
     set((state) => {
-      const alreadyExists = state.items.find((i) => i.id === id);
+      const alreadyExists = state.items.find(
+        (item) => item.googleId === googleId,
+      );
       if (!alreadyExists) return state;
       return {
-        items: state.items.filter((item) => item.id !== id),
+        items: state.items.filter((item) => item.googleId !== googleId),
       };
     }),
 }));

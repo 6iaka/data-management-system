@@ -17,7 +17,7 @@ export class DriveService {
     scopes: ["https://www.googleapis.com/auth/drive"],
   });
 
-  private drive = google.drive({ version: "v2", auth: this.auth });
+  private drive = google.drive({ version: "v3", auth: this.auth });
 
   /**
    * Upload a file to Google Drive
@@ -27,34 +27,49 @@ export class DriveService {
   uploadFile = async ({
     file,
     folderId,
+    onProgress,
   }: {
     file: File;
     folderId?: string;
+    onProgress?: (event: { bytesRead: number; totalBytes: number }) => void;
   }) => {
     try {
       if (!file) throw new Error("No file provided");
 
       const arrayBuffer = await file.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
-
       const stream = Readable.from(buffer);
 
-      const fileMetadata = {
-        parents: folderId ? [{ id: folderId }] : [{ id: "root" }],
+      const fileMetadata = {};
+      const media = {
+        body: stream,
         mimeType: file.type,
-        title: file.name,
+        chunkSize: 256 * 1024,
       };
 
-      const media = { mimeType: file.type, body: stream };
-
-      const response = await this.drive.files.insert(
+      const totalBytes = file.size;
+      const response = await this.drive.files.create(
         {
-          requestBody: fileMetadata,
+          requestBody: {
+            // title: file.name,
+            // parents: folderId ? [{ id: folderId }] : [{ id: "root" }],
+            mimeType: file.type,
+            name: file.name,
+          },
           supportsAllDrives: true,
-          uploadType: "resumable", // Enable resumable upload
-          media,
+          uploadType: "multipart",
+          media: {
+            mimeType: file.type,
+            body: stream,
+          },
         },
         {
+          onUploadProgress: (e) => {
+            onProgress?.({
+              bytesRead: e.bytesRead,
+              totalBytes,
+            });
+          },
           retry: true,
           retryConfig: {
             retry: 3,
@@ -62,8 +77,18 @@ export class DriveService {
               console.log("Retrying upload after error:", err);
             },
           },
+          maxRedirects: 0,
+          maxContentLength: Infinity,
         },
       );
+
+      await this.drive.permissions.create({
+        fileId: response.data.id!,
+        requestBody: {
+          role: "reader",
+          type: "anyone",
+        },
+      });
 
       return response.data;
     } catch (error) {
@@ -135,9 +160,9 @@ export class DriveService {
   getFolderDetails = async (id: string) => {
     const response = await this.drive.files.get({
       fileId: id,
-      fields: "id,title,mimeType,modifiedDate,createdDate",
     });
     const folder = response.data;
+    return folder;
 
     if (!folder.id) return null;
 
@@ -172,6 +197,11 @@ export class DriveService {
     }
 
     return path;
+  };
+
+  getAllFiles = async () => {
+    const folder = await this.drive.files.list();
+    return folder.data.files;
   };
 
   /**

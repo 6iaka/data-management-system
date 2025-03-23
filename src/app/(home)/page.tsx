@@ -1,20 +1,35 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
+import { Info } from "lucide-react";
 import FolderCard from "~/components/FolderCard";
 import SelectionActionBar from "~/components/SelectionActionBar";
+import { Button } from "~/components/ui/button";
+import { useSelection } from "~/hooks/use-selection";
 import { getAllFolders } from "~/server/actions/folder_action";
 
 const HomePage = () => {
+  const { setIsOpen } = useSelection((state) => state);
   const { data } = useQuery({
-    queryKey: ["all-folders"],
     queryFn: async () => getAllFolders(),
+    queryKey: ["all-folders"],
   });
 
   return (
     <>
-      <h2 className="scroll-m-20 text-2xl font-semibold tracking-tight first:mt-0">
-        Dashboard
-      </h2>
+      <header className="flex items-center justify-between gap-4">
+        <h2 className="scroll-m-20 text-2xl font-semibold tracking-tight first:mt-0">
+          Dashboard
+        </h2>
+
+        <Button
+          size={"icon"}
+          variant={"ghost"}
+          className="rounded-full"
+          onClick={() => setIsOpen(true)}
+        >
+          <Info />
+        </Button>
+      </header>
 
       <SelectionActionBar />
 

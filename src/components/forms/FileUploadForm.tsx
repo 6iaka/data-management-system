@@ -1,10 +1,8 @@
 "use client";
 
-import { useUser } from "@clerk/nextjs";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
 import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
-import { notFound } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "~/components/ui/button";
@@ -31,39 +29,61 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "~/components/ui/popover";
+import { useToast } from "~/hooks/use-toast";
 import { cn } from "~/lib/utils";
 import { uploadFile } from "~/server/actions/file_action";
 import { getAllTags } from "~/server/actions/tag_action";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+import { Textarea } from "../ui/textarea";
 
 const formSchema = z.object({
   files: z.instanceof(FileList),
-  tag: z.string().min(1),
+  tagName: z.string().optional(),
+  description: z.string().min(1).optional(),
 });
 
 type Props = { folderId?: number };
 
 const FileUploadForm = ({ folderId }: Props) => {
-  const { data } = useQuery({
+  const { toast } = useToast();
+
+  const { data: tags } = useQuery({
     queryKey: ["tags"],
     queryFn: async () => await getAllTags(),
   });
 
-  const { user } = useUser();
-  if (!user) notFound();
-
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: { tag: "" },
+    defaultValues: { tagName: "" },
   });
   const fileRef = form.register("files");
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    await uploadFile({
+    const response = await uploadFile({
+      description: values.description,
+      tagName: values.tagName,
       files: values.files,
-      tag: values.tag,
       folderId,
     });
-    form.reset();
+
+    if (!response.success) {
+      toast({
+        title: "Error",
+        description: response.error,
+      });
+    } else {
+      toast({
+        title: "Success",
+        description: `File uploaded GoogleID: ${response.data.googleId}`,
+      });
+      form.reset();
+    }
   };
 
   return (
@@ -88,63 +108,44 @@ const FileUploadForm = ({ folderId }: Props) => {
 
         <FormField
           control={form.control}
-          name="tag"
+          name="tagName"
           render={({ field }) => (
             <FormItem className="flex flex-col">
-              <FormLabel>Tag</FormLabel>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant="outline"
-                      role="combobox"
-                      className={cn(
-                        "w-full justify-between",
-                        !field.value && "text-muted-foreground",
-                      )}
-                    >
-                      {field.value
-                        ? data?.find((tag) => tag.name === field.value)?.name
-                        : "Select tag"}
-                      <ChevronsUpDown className="opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
+              <FormLabel>Tag (Optional)</FormLabel>
 
-                <PopoverContent className="w-[--radix-popover-trigger-width] flex-1 p-0">
-                  <Command>
-                    <CommandInput placeholder="Search tag..." className="h-9" />
-                    <CommandList>
-                      <CommandEmpty>No Tags found.</CommandEmpty>
-                      <CommandGroup>
-                        {data?.map((tag) => (
-                          <CommandItem
-                            value={tag.name}
-                            key={tag.name}
-                            onSelect={() => {
-                              form.setValue("tag", tag.name);
-                            }}
-                          >
-                            {tag.name}
-                            <Check
-                              className={cn(
-                                "ml-auto",
-                                tag.name === field.name
-                                  ? "opacity-100"
-                                  : "opacity-0",
-                              )}
-                            />
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a tag" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {tags?.map((item) => (
+                    <SelectItem key={item.id} value={item.name}>
+                      {item.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
               <FormDescription>
                 This tag will be used to organize the files. Please create new
                 ones if neccessary.
               </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem className="flex flex-col">
+              <FormLabel>Description (Optional)</FormLabel>
+              <FormControl>
+                <Textarea placeholder="Add a description" {...field}></Textarea>
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}

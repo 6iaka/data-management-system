@@ -1,60 +1,25 @@
 "use client";
 
-import { Home, Search, Settings } from "lucide-react";
-import Link from "next/link";
 import DetailsSidebar from "~/components/DetailsSidebar";
 import Navbar from "~/components/Navbar";
-import { Button } from "~/components/ui/button";
+import Sidebar from "~/components/Sidebar";
 import { useSelection } from "~/hooks/use-selection";
 
-const items = [
-  {
-    title: "Home",
-    url: "/",
-    icon: Home,
-  },
-  {
-    title: "Search",
-    url: "/search",
-    icon: Search,
-  },
-  {
-    title: "Settings",
-    url: "#",
-    icon: Settings,
-  },
-];
-
 const HomeLayout = ({ children }: Readonly<{ children: React.ReactNode }>) => {
-  const { resetItems } = useSelection((state) => state);
+  const { resetItems, isOpen } = useSelection((state) => state);
 
   return (
-    <main className="flex min-h-svh w-full flex-col" onClick={resetItems}>
+    <main className="flex h-screen w-screen flex-col" onClick={resetItems}>
       <Navbar />
 
-      <section className="grid flex-1 grid-cols-[250px,1fr,300px] gap-2 p-4">
-        <div className="flex flex-col gap-2">
-          {items.map((item) => (
-            <Button
-              asChild
-              size={"sm"}
-              key={item.title}
-              variant={"ghost"}
-              className="justify-start rounded-full"
-            >
-              <Link href={item.url}>
-                <item.icon />
-                <span>{item.title}</span>
-              </Link>
-            </Button>
-          ))}
-        </div>
+      <section className="flex min-h-0 flex-1 gap-2 p-4">
+        <Sidebar />
 
-        <div className="flex h-full flex-col gap-4 rounded-2xl bg-secondary/20 p-4">
+        <div className="flex flex-1 flex-col gap-4 overflow-y-auto rounded-2xl bg-secondary/20 p-4">
           {children}
         </div>
 
-        <DetailsSidebar />
+        {isOpen && <DetailsSidebar />}
       </section>
     </main>
   );

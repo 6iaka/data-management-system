@@ -1,4 +1,4 @@
-import { ChevronLeft, Table } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import DropzoneProvider from "~/components/DropzoneProvider";
@@ -6,7 +6,7 @@ import FileCard from "~/components/FileCard";
 import FolderCard from "~/components/FolderCard";
 import CreateFolderForm from "~/components/forms/CreateFolderForm";
 import FileUploadForm from "~/components/forms/FileUploadForm";
-import TooltipWrapper from "~/components/TooltipWrapper";
+import SelectionActionBar from "~/components/SelectionActionBar";
 import { Button } from "~/components/ui/button";
 import {
   Dialog,
@@ -15,13 +15,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "~/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "~/components/ui/select";
+import driveService from "~/server/services/drive_service";
 import folderService from "~/server/services/folder_service";
 
 type Props = { params: Promise<{ id: string }> };
@@ -33,8 +27,12 @@ const FolderPage = async ({ params }: Props) => {
   const data = await folderService.findById(id);
   if (!data) notFound();
 
+  const folders = await driveService.getFolderDetails(data.googleId);
+
   return (
-    <main className="flex flex-1 flex-col gap-2">
+    <>
+      {JSON.stringify(folders)}
+
       <header className="flex flex-col gap-2">
         <div className="flex flex-1 items-start justify-between gap-2">
           {data.parentId ? (
@@ -45,7 +43,7 @@ const FolderPage = async ({ params }: Props) => {
               </Link>
             </Button>
           ) : (
-            <Button variant={"ghost"} asChild>
+            <Button variant={"ghost"} className="rounded-full" asChild>
               <Link href={"/"}>
                 <ChevronLeft />
                 Dashboard
@@ -56,8 +54,11 @@ const FolderPage = async ({ params }: Props) => {
           <div className="flex flex-wrap gap-2">
             <Dialog>
               <DialogTrigger asChild>
-                <Button size={"sm"}>Upload File</Button>
+                <Button size={"sm"} className="rounded-full">
+                  Upload File
+                </Button>
               </DialogTrigger>
+
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Upload File</DialogTitle>
@@ -68,7 +69,11 @@ const FolderPage = async ({ params }: Props) => {
 
             <Dialog>
               <DialogTrigger asChild>
-                <Button size={"sm"} variant={"secondary"}>
+                <Button
+                  size={"sm"}
+                  className="rounded-full"
+                  variant={"secondary"}
+                >
                   New Folder
                 </Button>
               </DialogTrigger>
@@ -81,8 +86,11 @@ const FolderPage = async ({ params }: Props) => {
             </Dialog>
           </div>
         </div>
-        <h2 className="text-xl font-bold">{data.name}</h2>
+
+        <h2 className="text-xl font-bold">{data.title}</h2>
       </header>
+
+      <SelectionActionBar />
 
       <DropzoneProvider>
         <section className="flex flex-col gap-2 rounded-lg">
@@ -99,38 +107,18 @@ const FolderPage = async ({ params }: Props) => {
         </section>
 
         <section className="flex flex-col gap-2 rounded-lg">
-          <header className="flex items-center justify-between">
-            <h3 className="text-balance font-medium">Files</h3>
-            <div className="flex gap-2">
-              <Select>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="images">Photos & Images</SelectItem>
-                  <SelectItem value="videos">Videos</SelectItem>
-                  <SelectItem value="pdfs">PDFs</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <TooltipWrapper label="Change Display">
-                <Button variant={"ghost"} size={"icon"}>
-                  <Table />
-                </Button>
-              </TooltipWrapper>
-            </div>
-          </header>
+          <h3 className="text-balance font-medium">Files</h3>
 
           <div className="grid w-full grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-2">
             {data.files.length > 0 ? (
-              data.files.map((item) => <FileCard file={item} key={item.id} />)
+              data.files.map((item) => <FileCard data={item} key={item.id} />)
             ) : (
               <p className="text-sm text-muted-foreground">No Files Here</p>
             )}
           </div>
         </section>
       </DropzoneProvider>
-    </main>
+    </>
   );
 };
 
