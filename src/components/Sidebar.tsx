@@ -3,8 +3,6 @@ import { Button } from "./ui/button";
 import Link from "next/link";
 import { Home, Search, Settings } from "lucide-react";
 
-type Props = {};
-
 const items = [
   {
     title: "Home",

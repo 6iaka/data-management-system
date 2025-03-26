@@ -9,7 +9,7 @@ import { useToast } from "~/hooks/use-toast";
 import { useEffect } from "react";
 import type { File as FileData } from "@prisma/client";
 
-const SelectionActionBar = ({ folderId }: { folderId: number }) => {
+const SelectionActionBar = ({ folderId }: { folderId?: number }) => {
   const { toast } = useToast();
   const { items, resetItems } = useSelection((state) => state);
   const queryClient = useQueryClient();
@@ -23,13 +23,8 @@ const SelectionActionBar = ({ folderId }: { folderId: number }) => {
     },
 
     onMutate: async () => {
-      queryClient.cancelQueries({ queryKey: ["getFiles", folderId] });
-
-      const snapshot = (await queryClient.getQueryData([
-        "getFiles",
-        folderId,
-      ])) as ApiResponse<FileData[]>;
-
+      await queryClient.cancelQueries({ queryKey: ["getFiles", folderId] });
+      const snapshot = await queryClient.getQueryData(["getFiles", folderId]);
       queryClient.setQueryData(
         ["getFiles", folderId],
         (old: ApiResponse<FileData[]>) => {
@@ -63,7 +58,7 @@ const SelectionActionBar = ({ folderId }: { folderId: number }) => {
         description: "Files deleted",
       });
     }
-  }, [isSuccess, isPending]);
+  }, [isSuccess, isPending, toast]);
 
   if (items.length > 0) {
     return (

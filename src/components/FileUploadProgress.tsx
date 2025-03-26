@@ -1,6 +1,5 @@
 "use client";
-type Props = {};
-const FileUploadProgress = (props: Props) => {
+const FileUploadProgress = () => {
   return (
     <div>
       <div></div>

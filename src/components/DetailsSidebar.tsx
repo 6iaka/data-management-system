@@ -7,7 +7,6 @@ import { useSelection } from "~/hooks/use-selection";
 import { getFolderDetails } from "~/server/actions/folder_action";
 import { Button } from "./ui/button";
 import { Textarea } from "./ui/textarea";
-import { ScrollArea } from "./ui/scroll-area";
 
 const DetailsSidebar = () => {
   const { items, setIsOpen } = useSelection((state) => state);

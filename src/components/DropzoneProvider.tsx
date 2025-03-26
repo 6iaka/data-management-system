@@ -1,8 +1,7 @@
 "use client";
 import { useMutation } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
-import Image from "next/image";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { useDropzone } from "react-dropzone";
 import { useToast } from "~/hooks/use-toast";
@@ -29,13 +28,15 @@ const DropzoneProvider = ({
       }),
   });
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    setFiles(acceptedFiles);
-    mutate(acceptedFiles);
-  }, []);
+  const onDrop = useCallback(
+    (acceptedFiles: File[]) => {
+      setFiles(acceptedFiles);
+      mutate(acceptedFiles);
+    },
+    [mutate],
+  );
 
-  const { getRootProps, getInputProps, isDragActive, acceptedFiles } =
-    useDropzone({ onDrop });
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
 
   useEffect(() => {
     if (!isPending && isSuccess) {
@@ -45,7 +46,7 @@ const DropzoneProvider = ({
       });
       setFiles([]);
     }
-  }, [isSuccess, isPending]);
+  }, [isSuccess, isPending, toast]);
 
   if (isDragActive)
     return (

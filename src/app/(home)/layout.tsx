@@ -3,7 +3,6 @@
 import DetailsSidebar from "~/components/DetailsSidebar";
 import Navbar from "~/components/Navbar";
 import Sidebar from "~/components/Sidebar";
-import { ScrollArea } from "~/components/ui/scroll-area";
 import { useSelection } from "~/hooks/use-selection";
 
 const HomeLayout = ({ children }: Readonly<{ children: React.ReactNode }>) => {
