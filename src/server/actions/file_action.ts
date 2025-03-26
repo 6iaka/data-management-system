@@ -1,11 +1,11 @@
 "use server";
 
 import { currentUser } from "@clerk/nextjs/server";
+import type { File as FileData } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import driveService from "../services/drive_service";
 import fileService from "../services/file_service";
 import folderService from "../services/folder_service";
-import type { File as FileData } from "@prisma/client";
 
 export const getFiles = async (folderId: number) => {
   try {
@@ -49,7 +49,7 @@ export const uploadFiles = async ({
     const upload = await Promise.allSettled(uploadPromise);
     const results = upload.map((item) => {
       if (item.status === "rejected") {
-        return { success: false, error: item.reason };
+        return { success: false, error: item.reason as string };
       } else {
         return { success: false, data: item.value };
       }
@@ -83,7 +83,7 @@ export const uploadFile = async ({
   tagName?: string;
   description?: string;
 }): Promise<ApiResponse<FileData>> => {
-  let driveFileId: string = "";
+  let driveFileId = "";
 
   try {
     const user = await currentUser();
@@ -95,13 +95,14 @@ export const uploadFile = async ({
 
     const driveFile = await driveService.uploadFile({
       folderId: rootFolderId,
-      file: file,
+      description,
+      file,
     });
     driveFileId = driveFile.id!;
 
     const newFile = await fileService.upsertFile({
       ...(tagName && { tag: { connect: { name: tagName } } }),
-      iconLink: driveFile.iconLink?.replace("16", "64")!,
+      iconLink: driveFile.iconLink!.replace("16", "64"),
       folder: { connect: { googleId: rootFolderId } },
       originalFilename: driveFile.originalFilename!,
       webContentLink: driveFile.webContentLink!,

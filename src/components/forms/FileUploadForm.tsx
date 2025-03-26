@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
-import Dropzone, { DropzoneState } from "shadcn-dropzone";
+import Dropzone, { type DropzoneState } from "shadcn-dropzone";
 import { z } from "zod";
 import { Button } from "~/components/ui/button";
 import {

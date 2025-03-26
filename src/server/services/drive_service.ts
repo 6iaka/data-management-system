@@ -1,7 +1,8 @@
 "server only";
 import { google } from "googleapis";
+import { Readable } from "stream";
 import { env } from "~/env";
-import { Readable, PassThrough } from "stream";
+import { getRootData } from "../actions/drive_action";
 
 export class DriveService {
   private auth = new google.auth.GoogleAuth({
@@ -27,9 +28,11 @@ export class DriveService {
   uploadFile = async ({
     file,
     folderId,
+    description,
   }: {
     file: File;
     folderId?: string;
+    description?: string;
   }) => {
     try {
       if (!file) throw new Error("No file provided");
@@ -38,9 +41,12 @@ export class DriveService {
       const buffer = Buffer.from(arrayBuffer);
       const stream = Readable.from(buffer);
 
+      const parentId = folderId || (await getRootData())?.id || "root";
+
       const response = await this.drive.files.create({
         requestBody: {
-          parents: [folderId || "root"],
+          parents: [parentId],
+          description: description,
           mimeType: file.type,
           name: file.name,
         },
@@ -68,13 +74,18 @@ export class DriveService {
     }
   };
 
-  createFolder = async (name: string, parentId?: string) => {
+  createFolder = async (payload: {
+    title: string;
+    parentId?: string;
+    description?: string;
+  }) => {
     try {
       const response = await this.drive.files.create({
         requestBody: {
-          parents: parentId ? [parentId] : ["root"],
+          name: payload.title,
+          parents: [payload.parentId || "root"],
           mimeType: "application/vnd.google-apps.folder",
-          name,
+          description: payload.description,
         },
       });
 
@@ -89,7 +100,7 @@ export class DriveService {
     try {
       const response = await this.drive.files.list({
         q: "mimeType = 'application/vnd.google-apps.folder'",
-        fields: "items(id,title,parents,mimeType)",
+        fields: "*",
       });
 
       const folders = response.data.files ?? [];
@@ -99,6 +110,7 @@ export class DriveService {
       );
 
       if (!rootFolder) return null;
+
       return rootFolder;
     } catch (error) {
       console.error("Error getting root folders:", error);

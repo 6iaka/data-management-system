@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import driveService from "../services/drive_service";
 import folderService from "../services/folder_service";
+import { getRootData } from "./drive_action";
 
 export const getAllFolders = async () => {
   return await folderService.getAll();
@@ -19,15 +20,31 @@ export const createRootFolder = async () => {
     const user = await currentUser();
     if (!user) throw new Error("Not autorized");
 
+    const root = await getRootData();
+    if (!root) throw new Error("Root folder not found");
+
     const folder = await folderService.upsert({
       description: "Main folder of the project.",
+      googleId: root.id!,
       userClerkId: user.id,
-      googleId: "root",
       title: "Root",
       isRoot: true,
     });
+
+    return {
+      success: true,
+      data: folder,
+    } as const;
   } catch (error) {
-    return {};
+    // Error handling
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error occurred";
+    console.error("Fetch failed failed:", errorMessage);
+
+    return {
+      success: false,
+      error: errorMessage,
+    } as const;
   }
 };
 
@@ -47,14 +64,15 @@ export const createNewFolder = async (payload: {
     if (!user) throw new Error("Not authorized");
     const valid = schema.parse(payload);
 
-    const rootFolderId = valid.parentId
-      ? (await folderService.findById(valid.parentId))?.googleId
+    const rootFolderId = valid?.parentId
+      ? (await folderService.findById(valid?.parentId))?.googleId
       : undefined;
 
-    const driveFolder = await driveService.createFolder(
-      valid.title,
-      rootFolderId,
-    );
+    const driveFolder = await driveService.createFolder({
+      title: valid.title,
+      parentId: rootFolderId,
+      description: valid.description,
+    });
     if (!driveFolder.id) throw new Error("Folder GoogleId not found");
 
     try {
