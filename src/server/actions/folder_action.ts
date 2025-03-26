@@ -1,59 +1,62 @@
 "use server";
 
 import { currentUser } from "@clerk/nextjs/server";
-import folderService from "../services/folder_service";
-import { getRootData } from "./drive_action";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import driveService from "../services/drive_service";
-import { revalidatePath } from "next/cache";
+import folderService from "../services/folder_service";
+import { getRootData } from "./drive_action";
+
+export const getAllFolders = async () => {
+  return await folderService.getAll();
+};
+
+export const getFolderDetails = async (id: number) => {
+  return await folderService.findById(id);
+};
 
 export const createRootFolder = async () => {
   try {
     const user = await currentUser();
     if (!user) throw new Error("Not autorized");
 
-    const data = await getRootData();
-    if (!data) throw new Error("Root folder data not found");
-
-    const rootFolder = data.rootFolder;
-    if (!rootFolder.id) throw new Error("No GoogleID found");
-
-    const folderExists = await folderService.findByGoogleId(rootFolder.id);
-    if (folderExists) throw new Error("Root folder already exists");
+    const root = await getRootData();
+    if (!root) throw new Error("Root folder not found");
 
     const folder = await folderService.upsert({
-      googleId: rootFolder.id,
-      userClerkId: user.id,
-      name: "Root",
       description: "Main folder of the project.",
+      googleId: root.id!,
+      userClerkId: user.id,
+      title: "Root",
       isRoot: true,
     });
 
-    console.log("Root folder created", folder.id);
+    return {
+      success: true,
+      data: folder,
+    } as const;
   } catch (error) {
-    console.error(error);
+    // Error handling
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error occurred";
+    console.error("Fetch failed failed:", errorMessage);
+
+    return {
+      success: false,
+      error: errorMessage,
+    } as const;
   }
 };
 
 export const createNewFolder = async (payload: {
-  name: string;
-  description: string;
+  title: string;
+  description?: string;
   parentId?: number;
 }) => {
   const schema = z.object({
-    name: z
-      .string()
-      .min(1, "Folder name is required")
-      .max(255, "Folder name cannot exceed 255 characters")
-      .regex(/^[^<>:"/\\|?*]+$/, {
-        message: "Folder name contains invalid characters",
-      })
-      .trim(),
+    title: z.string().trim(),
     parentId: z.coerce.number().optional(),
-    description: z
-      .string()
-      .min(10, "Description should be at least 10 characters")
-      .max(1000, "Description cannot exceed 1000 characters"),
+    description: z.string().optional(),
   });
 
   try {
@@ -61,27 +64,25 @@ export const createNewFolder = async (payload: {
     if (!user) throw new Error("Not authorized");
     const valid = schema.parse(payload);
 
-    const rootFolderId = valid.parentId
-      ? (await folderService.findById(valid.parentId))?.googleId
-      : (await getRootData())?.rootFolder.id;
-    if (!rootFolderId) return null;
+    const rootFolderId = valid?.parentId
+      ? (await folderService.findById(valid?.parentId))?.googleId
+      : undefined;
 
-    const driveFolder = await driveService.createFolder(
-      valid.name,
-      rootFolderId,
-    );
+    const driveFolder = await driveService.createFolder({
+      title: valid.title,
+      parentId: rootFolderId,
+      description: valid.description,
+    });
     if (!driveFolder.id) throw new Error("Folder GoogleId not found");
 
     try {
-      const newFolder = await folderService.upsert({
+      await folderService.upsert({
         description: valid.description,
-        name: valid.name,
+        title: valid.title,
         googleId: driveFolder.id,
         userClerkId: user.id,
         parent: { connect: { googleId: rootFolderId } },
       });
-
-      console.log("Folder created with success", newFolder.id);
 
       revalidatePath("/");
       revalidatePath("/folder/:id", "page");
@@ -96,23 +97,13 @@ export const createNewFolder = async (payload: {
 
 export const editFolder = async (payload: {
   id: number;
-  name: string;
-  description: string;
+  title: string;
+  description?: string;
 }) => {
   const schema = z.object({
     id: z.coerce.number().min(1),
-    name: z
-      .string()
-      .min(1, "Folder name is required")
-      .max(255, "Folder name cannot exceed 255 characters")
-      .regex(/^[^<>:"/\\|?*]+$/, {
-        message: "Folder name contains invalid characters",
-      })
-      .trim(),
-    description: z
-      .string()
-      .min(10, "Description should be at least 10 characters")
-      .max(1000, "Description cannot exceed 1000 characters"),
+    title: z.string().trim(),
+    description: z.string().optional(),
   });
 
   try {
@@ -122,11 +113,10 @@ export const editFolder = async (payload: {
 
     const newFolder = await folderService.update(valid.id, {
       description: valid.description,
-      name: valid.name,
+      title: valid.title,
     });
 
-    await driveService.renameItem(newFolder.googleId, payload.name);
-    console.log("Folder created with success", newFolder.id);
+    await driveService.renameItem(newFolder.googleId, payload.title);
 
     revalidatePath("/");
     revalidatePath("/folder/:id", "page");

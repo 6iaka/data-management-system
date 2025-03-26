@@ -8,18 +8,6 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
-enum Extension {
-    png
-    svg
-    jpeg
-    jpg
-    gif
-    mp4
-    mkv
-    mov
-    pdf
-}
-
 model Tag {
     id   Int    @id @default(autoincrement())
     name String @unique
@@ -31,44 +19,50 @@ model Tag {
 }
 
 model Folder {
-    id   Int    @id @default(autoincrement())
-    name String @unique
-
-    userClerkId String
+    id          Int    @id @default(autoincrement())
+    title       String @unique
     googleId    String @unique
-    description String
+    userClerkId String
+
+    description String?
+    isRoot      Boolean @default(false)
 
     parentId Int?
     parent   Folder?  @relation("FolderToFolder", fields: [parentId], references: [id])
     children Folder[] @relation("FolderToFolder")
     files    File[]
 
-    isRoot Boolean @default(false)
-
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 }
 
 model File {
-    id   Int    @id @default(autoincrement())
-    name String
-
-    previewLink String?
-
-    mimeType      String
-    fileExtension Extension
-    size          Int
-
-    tag   Tag @relation(fields: [tagId], references: [id])
-    tagId Int
-
-    googleId String @unique
-    url      String
-
-    folderId Int
-    folder   Folder @relation(fields: [folderId], references: [id], onDelete: Cascade)
-
+    id          Int     @id @default(autoincrement())
+    folderId    Int
     userClerkId String
-    createdAt   DateTime @default(now())
-    updatedAt   DateTime @updatedAt
+    tagName     String?
+
+    folder Folder @relation(fields: [folderId], references: [id], onDelete: Cascade)
+    tag    Tag?   @relation(fields: [tagName], references: [name])
+
+    // Core informations
+    googleId    String  @unique
+    title       String
+    mimeType    String
+    description String?
+
+    // Links
+    webViewLink    String
+    webContentLink String
+    thumbnailLink  String?
+    iconLink       String
+
+    // File details
+    fileSize         Int
+    fileExtension    String
+    originalFilename String
+    trashed          Boolean? @default(false)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 }

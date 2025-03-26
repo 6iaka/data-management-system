@@ -2,6 +2,7 @@
 import { google } from "googleapis";
 import { Readable } from "stream";
 import { env } from "~/env";
+import { getRootData } from "../actions/drive_action";
 
 export class DriveService {
   private auth = new google.auth.GoogleAuth({
@@ -17,7 +18,7 @@ export class DriveService {
     scopes: ["https://www.googleapis.com/auth/drive"],
   });
 
-  private drive = google.drive({ version: "v2", auth: this.auth });
+  private drive = google.drive({ version: "v3", auth: this.auth });
 
   /**
    * Upload a file to Google Drive
@@ -27,43 +28,44 @@ export class DriveService {
   uploadFile = async ({
     file,
     folderId,
+    description,
   }: {
     file: File;
     folderId?: string;
+    description?: string;
   }) => {
     try {
       if (!file) throw new Error("No file provided");
 
       const arrayBuffer = await file.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
-
       const stream = Readable.from(buffer);
 
-      const fileMetadata = {
-        parents: folderId ? [{ id: folderId }] : [{ id: "root" }],
-        mimeType: file.type,
-        title: file.name,
-      };
+      const parentId = folderId || (await getRootData())?.id || "root";
 
-      const media = { mimeType: file.type, body: stream };
+      const response = await this.drive.files.create({
+        requestBody: {
+          parents: [parentId],
+          description: description,
+          mimeType: file.type,
+          name: file.name,
+        },
+        supportsAllDrives: true,
+        uploadType: "resumable",
+        media: {
+          mimeType: file.type,
+          body: stream,
+        },
+        fields: "*",
+      });
 
-      const response = await this.drive.files.insert(
-        {
-          requestBody: fileMetadata,
-          supportsAllDrives: true,
-          uploadType: "resumable", // Enable resumable upload
-          media,
+      await this.drive.permissions.create({
+        fileId: response.data.id!,
+        requestBody: {
+          role: "reader",
+          type: "anyone",
         },
-        {
-          retry: true,
-          retryConfig: {
-            retry: 3,
-            onRetryAttempt: (err) => {
-              console.log("Retrying upload after error:", err);
-            },
-          },
-        },
-      );
+      });
 
       return response.data;
     } catch (error) {
@@ -72,17 +74,19 @@ export class DriveService {
     }
   };
 
-  createFolder = async (name: string, parentId?: string) => {
+  createFolder = async (payload: {
+    title: string;
+    parentId?: string;
+    description?: string;
+  }) => {
     try {
-      const fileMetadata = {
-        title: name,
-        mimeType: "application/vnd.google-apps.folder",
-        parents: parentId ? [{ id: parentId }] : [{ id: "root" }],
-      };
-
-      const response = await this.drive.files.insert({
-        requestBody: fileMetadata,
-        fields: "id,title,mimeType,parents",
+      const response = await this.drive.files.create({
+        requestBody: {
+          name: payload.title,
+          parents: [payload.parentId || "root"],
+          mimeType: "application/vnd.google-apps.folder",
+          description: payload.description,
+        },
       });
 
       return response.data;
@@ -96,16 +100,17 @@ export class DriveService {
     try {
       const response = await this.drive.files.list({
         q: "mimeType = 'application/vnd.google-apps.folder'",
-        fields: "items(id,title,parents,mimeType)",
+        fields: "*",
       });
 
-      const folders = response.data.items ?? [];
+      const folders = response.data.files ?? [];
 
       const rootFolder = folders.find(
         (folder) => !folder.parents || folder.parents.length === 0,
       );
 
       if (!rootFolder) return null;
+
       return rootFolder;
     } catch (error) {
       console.error("Error getting root folders:", error);
@@ -116,9 +121,8 @@ export class DriveService {
   getFolderContent = async (folderId: string) => {
     const response = await this.drive.files.list({
       q: `'${folderId}' in parents`,
-      // fields: "items(id,title,mimeType,fileSize)",
     });
-    const data = response.data.items ?? [];
+    const data = response.data.files ?? [];
 
     const contents = {
       folders: data.filter(
@@ -133,10 +137,7 @@ export class DriveService {
   };
 
   getFolderDetails = async (id: string) => {
-    const response = await this.drive.files.get({
-      fileId: id,
-      fields: "id,title,mimeType,modifiedDate,createdDate",
-    });
+    const response = await this.drive.files.get({ fileId: id });
     const folder = response.data;
 
     if (!folder.id) return null;
@@ -158,9 +159,8 @@ export class DriveService {
           fields: "parents,title",
         });
 
-        const title = folder.data.title;
-        const parentId = folder.data.parents?.[0]?.id;
-
+        const title = folder.data.name;
+        const parentId = folder.data.parents?.[0];
         if (!parentId) break;
 
         path.unshift({ id: currentId, title: title ?? "Unknown" });
@@ -174,17 +174,20 @@ export class DriveService {
     return path;
   };
 
+  getAllFiles = async () => {
+    const folder = await this.drive.files.list();
+    return folder.data.files;
+  };
+
   /**
    * Move a file or folder
    */
   moveItem = async (fileId: string, newParentId: string) => {
     try {
-      // Remove from current parent and add to new parent
-      const response = await this.drive.files.patch({
-        fileId,
-        removeParents: "root", // Will remove from all current parents
+      const response = await this.drive.files.update({
+        removeParents: "root",
         addParents: newParentId,
-        fields: "id, parents",
+        fileId,
       });
 
       return response.data;
@@ -198,14 +201,10 @@ export class DriveService {
    */
   renameItem = async (fileId: string, newName: string) => {
     try {
-      const response = await this.drive.files.patch({
+      const response = await this.drive.files.update({
+        requestBody: { name: newName },
         fileId,
-        requestBody: {
-          title: newName,
-        },
-        fields: "id,title",
       });
-
       return response.data;
     } catch (error) {
       throw new Error(`Failed to rename item: ${(error as Error).message}`);

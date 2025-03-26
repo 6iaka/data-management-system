@@ -14,23 +14,11 @@ import {
   FormMessage,
 } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
-import { Textarea } from "../ui/textarea";
 import { editFolder } from "~/server/actions/folder_action";
 
 const formSchema = z.object({
-  name: z
-    .string()
-    .min(1, "Folder name is required")
-    .max(255, "Folder name cannot exceed 255 characters")
-    .regex(/^[^<>:"/\\|?*]+$/, {
-      message: "Folder name contains invalid characters",
-    })
-    .trim(),
-
-  description: z
-    .string()
-    .min(10, "Description should be at least 10 characters")
-    .max(1000, "Description cannot exceed 1000 characters"),
+  title: z.string().trim(),
+  description: z.string().optional(),
 });
 
 type Props = { id: number };
@@ -38,10 +26,7 @@ type Props = { id: number };
 const EditFolderForm = ({ id }: Props) => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: "",
-      description: "",
-    },
+    defaultValues: { title: "" },
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
@@ -56,27 +41,13 @@ const EditFolderForm = ({ id }: Props) => {
         className="flex flex-col gap-4"
       >
         <FormField
-          name="name"
+          name="title"
           control={form.control}
           render={({ field }) => (
             <FormItem className="flex flex-col">
-              <FormLabel>Folder Name</FormLabel>
+              <FormLabel>Rename</FormLabel>
               <FormControl>
-                <Input placeholder="Folder name" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          name="description"
-          control={form.control}
-          render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel>Description</FormLabel>
-              <FormControl>
-                <Textarea placeholder="Description" {...field}></Textarea>
+                <Input placeholder="New folder name" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
