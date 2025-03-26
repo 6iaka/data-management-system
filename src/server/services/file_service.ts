@@ -22,6 +22,26 @@ export class FileService {
   };
 
   /**
+   * Get Files From Folder
+   * @param folderId ID of the folder to get the files from
+   * @returns A list of files inside the folder
+   */
+  getFilesByFolder = async (folderId: number) => {
+    try {
+      const files = await db.file.findMany({
+        orderBy: { createdAt: "desc" },
+        include: { tag: true },
+        where: { folderId },
+      });
+      return files;
+    } catch (error) {
+      throw new Error(
+        `Failed to fetch files by folder: ${(error as Error).message}`,
+      );
+    }
+  };
+
+  /**
    * Get Files from the database
    * @returns List of the 30 latest files in the database
    */

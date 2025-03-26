@@ -7,13 +7,37 @@ import fileService from "../services/file_service";
 import folderService from "../services/folder_service";
 import type { File as FileData } from "@prisma/client";
 
+export const getFiles = async (folderId: number) => {
+  try {
+    const user = await currentUser();
+    if (!user) throw new Error("Not authorized");
+
+    const files = await fileService.getFilesByFolder(folderId);
+
+    revalidatePath("/");
+    revalidatePath("/folder/:id", "page");
+
+    return { success: true, data: files } as const;
+  } catch (error) {
+    // Error handling
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error occurred";
+    console.error("Fetch failed failed:", errorMessage);
+
+    return {
+      success: false,
+      error: errorMessage,
+    } as const;
+  }
+};
+
 export const uploadFiles = async ({
   files,
   folderId,
 }: {
   files: File[];
   folderId?: number | null;
-}): Promise<ApiResponse<any>> => {
+}) => {
   try {
     const user = await currentUser();
     if (!user) throw new Error("Not authorized");
@@ -118,7 +142,7 @@ export const uploadFile = async ({
   }
 };
 
-export const deleteFiles = async (ids: number[]): Promise<ApiResponse<any>> => {
+export const deleteFiles = async (ids: number[]) => {
   try {
     const user = await currentUser();
     if (!user) throw new Error("Not authorized");
@@ -130,23 +154,27 @@ export const deleteFiles = async (ids: number[]): Promise<ApiResponse<any>> => {
     const deleted = await Promise.allSettled(deletePromise);
     const results = deleted.map((item) => {
       if (item.status === "rejected") {
-        return { success: false, error: item.reason };
+        return { success: false, error: item.reason as string };
       } else {
-        return { success: false, data: item.value };
+        if (item.value.success) {
+          return { success: false, data: item.value.data };
+        } else {
+          return { success: false, data: item.value.error };
+        }
       }
     });
 
     revalidatePath("/");
     revalidatePath("/folder/:id", "page");
 
-    return { success: true, data: results };
+    return results;
   } catch (error) {
     // Error handling
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error occurred";
     console.error("File upload failed:", errorMessage);
 
-    return { success: false, error: errorMessage };
+    return { success: false, error: errorMessage } as const;
   }
 };
 
@@ -156,9 +184,6 @@ export const deleteFile = async (
   try {
     const deletedFile = await fileService.deleteFile(id);
     await driveService.deleteItem(deletedFile.googleId);
-
-    revalidatePath("/");
-    revalidatePath("/folder/:id", "page");
 
     return { success: true, data: deletedFile };
   } catch (error) {
@@ -182,7 +207,6 @@ export const searchFile = async (
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error occurred";
     console.error("File upload failed:", errorMessage);
-
     return { success: false, error: errorMessage };
   }
 };

@@ -1,6 +1,6 @@
 "use client";
-import type { File } from "@prisma/client";
-import { EllipsisVertical } from "lucide-react";
+import type { File as FileData } from "@prisma/client";
+import { EllipsisVertical, Loader2 } from "lucide-react";
 import Image from "next/image";
 import {
   AlertDialog,
@@ -24,18 +24,31 @@ import { useSelection } from "~/hooks/use-selection";
 import { cn, formatFileSize } from "~/lib/utils";
 import { deleteFile } from "~/server/actions/file_action";
 import { Button } from "./ui/button";
+import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-type Props = { data: File };
+type Props = { data: FileData };
 
 const FileCard = ({ data }: Props) => {
+  const queryClient = useQueryClient();
   const { toggleSelect, items } = useSelection((state) => state);
   const isSelected = items.find((item) => item.googleId === data.googleId);
+  const [isOpen, setIsOpen] = useState(false);
+
+  const { mutate, isPending } = useMutation({
+    mutationFn: async () => await deleteFile(data.id),
+    onSettled: async () =>
+      await queryClient.invalidateQueries({
+        queryKey: ["getFiles", data.folderId],
+      }),
+  });
 
   return (
     <Card
       className={cn(
-        "group relative flex flex-col items-center gap-2.5 p-4 transition-all hover:bg-secondary/25",
+        "group relative flex flex-col items-center justify-center gap-2.5 p-4 transition-all hover:bg-secondary/25",
         isSelected && "bg-[#2D336B] hover:bg-[#2D336B]",
+        isPending && "pointer-events-none opacity-20",
       )}
       onDoubleClick={() => (window.location.href = data.webViewLink)}
       onClick={(e) => {
@@ -43,14 +56,19 @@ const FileCard = ({ data }: Props) => {
         toggleSelect({ googleId: data.googleId, id: data.id, type: "file" });
       }}
     >
-      <DropdownMenu>
+      <DropdownMenu defaultOpen={isOpen} onOpenChange={setIsOpen} open={isOpen}>
         <DropdownMenuTrigger asChild>
           <Button
             size={"icon"}
             variant={"ghost"}
             className="absolute right-2 top-2 z-20 size-6 rounded-full"
+            disabled={isPending}
           >
-            <EllipsisVertical />
+            {isPending ? (
+              <Loader2 className="animate-spin" />
+            ) : (
+              <EllipsisVertical />
+            )}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
@@ -76,7 +94,12 @@ const FileCard = ({ data }: Props) => {
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={() => deleteFile(data.id)}>
+                <AlertDialogAction
+                  onClick={() => {
+                    setIsOpen(false);
+                    mutate();
+                  }}
+                >
                   Continue
                 </AlertDialogAction>
               </AlertDialogFooter>
@@ -96,8 +119,10 @@ const FileCard = ({ data }: Props) => {
         />
       </div>
 
-      <div className="flex w-full select-none flex-col gap-1">
-        <p className="line-clamp-1 text-xs">{data.title}</p>
+      <div className="flex w-full select-none flex-col leading-[.5]">
+        <p className="overflow-hidden text-ellipsis whitespace-nowrap text-sm">
+          {data.title}
+        </p>
         <small className="text-xs font-light">
           {formatFileSize(data.fileSize)}
         </small>

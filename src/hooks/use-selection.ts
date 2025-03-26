@@ -1,5 +1,4 @@
 import type {} from "@redux-devtools/extension";
-import { Dispatch, SetStateAction } from "react";
 import { create } from "zustand";
 
 type Item = {

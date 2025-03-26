@@ -29,7 +29,7 @@ export default async function RootLayout({
     <ClerkProvider>
       <html
         lang="en"
-        className={`${fontSans.variable} --font-karla dark w-screen overflow-x-hidden`}
+        className={`${fontSans.variable} --font-karla dark w-screen select-none overflow-x-hidden`}
       >
         <body>
           <QueryProvider>

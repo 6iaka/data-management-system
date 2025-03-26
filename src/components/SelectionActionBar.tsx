@@ -3,20 +3,57 @@ import { Download, Loader2, Move, Trash, X } from "lucide-react";
 import { useSelection } from "~/hooks/use-selection";
 import { Button } from "./ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "./ui/select";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { deleteFiles } from "~/server/actions/file_action";
 import { useToast } from "~/hooks/use-toast";
 import { useEffect } from "react";
+import type { File as FileData } from "@prisma/client";
 
-const SelectionActionBar = () => {
+const SelectionActionBar = ({ folderId }: { folderId: number }) => {
   const { toast } = useToast();
   const { items, resetItems } = useSelection((state) => state);
+  const queryClient = useQueryClient();
+
   const { mutate, isSuccess, isPending } = useMutation({
     mutationKey: ["deleteFiles"],
+
     mutationFn: async (payload: number[]) => {
       await deleteFiles(payload);
       resetItems();
     },
+
+    onMutate: async () => {
+      queryClient.cancelQueries({ queryKey: ["getFiles", folderId] });
+
+      const snapshot = (await queryClient.getQueryData([
+        "getFiles",
+        folderId,
+      ])) as ApiResponse<FileData[]>;
+
+      queryClient.setQueryData(
+        ["getFiles", folderId],
+        (old: ApiResponse<FileData[]>) => {
+          if (old.success) {
+            return {
+              success: old.success,
+              data: old.data.filter(
+                (item) =>
+                  !items.map((item) => item.googleId).includes(item.googleId),
+              ),
+            };
+          }
+        },
+      );
+
+      return { snapshot };
+    },
+
+    onError: (_, __, context) => {
+      queryClient.setQueryData(["getFiles", folderId], context?.snapshot);
+    },
+
+    onSettled: async () =>
+      await queryClient.invalidateQueries({ queryKey: ["getFiles", folderId] }),
   });
 
   useEffect(() => {
@@ -28,7 +65,7 @@ const SelectionActionBar = () => {
     }
   }, [isSuccess, isPending]);
 
-  if (items.length > 0)
+  if (items.length > 0) {
     return (
       <div
         onClick={(e) => e.stopPropagation()}
@@ -74,6 +111,7 @@ const SelectionActionBar = () => {
         </div>
       </div>
     );
+  }
 
   return (
     <div className="flex gap-2">

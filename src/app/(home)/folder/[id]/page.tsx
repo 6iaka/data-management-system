@@ -2,12 +2,11 @@ import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import DropzoneProvider from "~/components/DropzoneProvider";
-import FileCard from "~/components/FileCard";
 import FolderCard from "~/components/FolderCard";
 import CreateFolderForm from "~/components/forms/CreateFolderForm";
 import FileUploadForm from "~/components/forms/FileUploadForm";
-import Dropzone from "shadcn-dropzone";
-
+import FileUploadProgress from "~/components/FileUploadProgress";
+import FilesContainer from "~/components/FilesContainer";
 import SelectionActionBar from "~/components/SelectionActionBar";
 import { Button } from "~/components/ui/button";
 import {
@@ -84,7 +83,7 @@ const FolderPage = async ({ params }: Props) => {
           </div>
         </div>
         <h2 className="text-xl font-bold">{data.title}</h2>
-        <SelectionActionBar />
+        <SelectionActionBar folderId={id} />
       </header>
 
       <DropzoneProvider className="flex h-full flex-1 flex-col gap-4 overflow-y-auto p-4">
@@ -101,7 +100,7 @@ const FolderPage = async ({ params }: Props) => {
           </div>
         </section>
 
-        <section className="flex flex-col gap-2 rounded-lg">
+        {/* <section className="flex flex-col gap-2 rounded-lg">
           <h3 className="text-balance font-medium">Files</h3>
 
           <div className="grid w-full grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-2">
@@ -111,7 +110,10 @@ const FolderPage = async ({ params }: Props) => {
               <p className="text-sm text-muted-foreground">No Files Here</p>
             )}
           </div>
-        </section>
+        </section> */}
+
+        <FilesContainer folderId={id} />
+        <FileUploadProgress />
       </DropzoneProvider>
     </>
   );
