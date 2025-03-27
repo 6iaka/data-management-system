@@ -21,7 +21,7 @@ import { Label } from "./ui/label";
 
 const SearchInput = () => {
   return (
-    <div className="relative">
+    <form action={"/search"} className="relative">
       <Button
         type="submit"
         size={"icon"}
@@ -32,6 +32,7 @@ const SearchInput = () => {
       </Button>
 
       <Input
+        name="query"
         placeholder="Search in Drive"
         className="h-11 rounded-full px-12"
       />
@@ -95,7 +96,7 @@ const SearchInput = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </form>
   );
 };
 

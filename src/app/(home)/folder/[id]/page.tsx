@@ -48,20 +48,7 @@ const FolderPage = async ({ params }: Props) => {
           )}
 
           <div className="flex flex-wrap gap-2">
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button size={"sm"} className="rounded-full">
-                  Upload File
-                </Button>
-              </DialogTrigger>
-
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Upload File</DialogTitle>
-                </DialogHeader>
-                <FileUploadForm folderId={id} />
-              </DialogContent>
-            </Dialog>
+            <FileUploadForm folderId={id} />
 
             <Dialog>
               <DialogTrigger asChild>

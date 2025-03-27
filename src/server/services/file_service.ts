@@ -94,12 +94,16 @@ export class FileService {
    * @param query Query parameter to search the file
    * @returns Array of results based on the query
    */
-  searchFile = async (query: string) => {
+  search = async (query: string) => {
     // TO: CREATE EXTENSION IF NOT EXISTS pg_trgm;
     try {
       const results = await db.$queryRaw`
-        SELECT GREATEST(SIMILARITY(title, ${query}), SIMILARITY("originalFilename", ${query})) AS score, "File".*
-        FROM "File" WHERE SIMILARITY(title, ${query}) > 0.14 OR SIMILARITY("originalFilename", ${query}) > 0.14
+        SELECT GREATEST(SIMILARITY(title, ${query}), 
+        SIMILARITY("originalFilename", ${query}),  
+        SIMILARITY("description", ${query})) AS score, "File".*
+        FROM "File" WHERE SIMILARITY(title, ${query}) > 0.14 
+        OR SIMILARITY("originalFilename", ${query}) > 0.14 
+        OR SIMILARITY("description", ${query}) > 0.14
         ORDER BY score DESC LIMIT 40;`;
 
       return results as FileData[];
