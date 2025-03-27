@@ -100,9 +100,9 @@ export class FileService {
         SELECT GREATEST(SIMILARITY(title, ${query}), 
         SIMILARITY("originalFilename", ${query}),  
         SIMILARITY("description", ${query})) AS score, "File".*
-        FROM "File" WHERE SIMILARITY(title, ${query}) > 0.14 
-        OR SIMILARITY("originalFilename", ${query}) > 0.14 
-        OR SIMILARITY("description", ${query}) > 0.14
+        FROM "File" WHERE SIMILARITY(title, ${query}) > 0.04 
+        OR SIMILARITY("originalFilename", ${query}) > 0.04 
+        OR SIMILARITY("description", ${query}) > 0.04
         ORDER BY score DESC LIMIT 40;`;
 
       return results as FileData[];

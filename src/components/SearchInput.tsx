@@ -18,8 +18,11 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 import { Label } from "./ui/label";
+import { useSearchParams } from "next/navigation";
 
 const SearchInput = () => {
+  const searchParams = useSearchParams();
+  const query = searchParams.get("query") || "";
   return (
     <form action={"/search"} className="relative">
       <Button
@@ -33,6 +36,7 @@ const SearchInput = () => {
 
       <Input
         name="query"
+        defaultValue={query}
         placeholder="Search in Drive"
         className="h-11 rounded-full px-12"
       />
