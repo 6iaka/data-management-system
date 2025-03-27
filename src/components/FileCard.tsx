@@ -1,20 +1,8 @@
 "use client";
 import type { File as FileData } from "@prisma/client";
-import { useMutation } from "@tanstack/react-query";
 import { EllipsisVertical, Loader2 } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "~/components/ui/alert-dialog";
+import { useState, useTransition } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,10 +17,7 @@ type Props = { data: FileData };
 
 const FileCard = ({ data }: Props) => {
   const [isOpen, setIsOpen] = useState(false);
-
-  const { mutate, isPending } = useMutation({
-    mutationFn: async () => await deleteFile(data.id),
-  });
+  const [isPending, startTransition] = useTransition();
 
   return (
     <a
@@ -65,33 +50,16 @@ const FileCard = ({ data }: Props) => {
               Download
             </a>
           </DropdownMenuItem>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                Delete
-              </DropdownMenuItem>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This action cannot be undone. This will permanently delete
-                  your file and remove its data from our servers.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => {
-                    setIsOpen(false);
-                    mutate();
-                  }}
-                >
-                  Continue
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+
+          <DropdownMenuItem
+            onSelect={() =>
+              startTransition(async () => {
+                await deleteFile(data.id);
+              })
+            }
+          >
+            Delete
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 

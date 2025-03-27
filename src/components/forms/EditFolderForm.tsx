@@ -26,7 +26,7 @@ import { editFolder } from "~/server/actions/folder_action";
 import { DropdownMenuItem } from "../ui/dropdown-menu";
 
 const formSchema = z.object({
-  title: z.string().trim(),
+  title: z.string().trim().toLowerCase(),
   description: z.string().optional(),
 });
 
@@ -42,7 +42,7 @@ const EditFolderForm = ({ id }: Props) => {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     await editFolder({ ...values, id });
     form.reset();
-    setIsOpen(true);
+    setIsOpen(false);
   };
 
   return (

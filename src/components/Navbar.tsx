@@ -2,6 +2,7 @@ import { HelpCircle, LayoutGrid } from "lucide-react";
 import Link from "next/link";
 import SearchInput from "./SearchInput";
 import { Button } from "./ui/button";
+import CreateTagForm from "./forms/CreateTagForm";
 
 const Navbar = () => {
   return (
@@ -61,7 +62,9 @@ const Navbar = () => {
         <SearchInput />
       </div>
 
-      <div>
+      <div className="flex items-center justify-center gap-2">
+        <CreateTagForm />
+
         <Button variant={"ghost"} size={"icon"} className="rounded-full">
           <HelpCircle />
         </Button>

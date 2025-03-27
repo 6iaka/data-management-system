@@ -7,13 +7,6 @@ import FolderCard from "~/components/FolderCard";
 import CreateFolderForm from "~/components/forms/CreateFolderForm";
 import FileUploadForm from "~/components/forms/FileUploadForm";
 import { Button } from "~/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "~/components/ui/dialog";
 import { findFolderById } from "~/server/actions/folder_action";
 
 type Props = { params: Promise<{ id: string }> };
@@ -30,7 +23,7 @@ const FolderPage = async ({ params }: Props) => {
       <header className="flex flex-col gap-2 p-4 pb-0">
         <div className="flex flex-1 items-start justify-between gap-2">
           {data.parentId ? (
-            <Button variant={"secondary"} asChild>
+            <Button variant={"secondary"} className="rounded-full" asChild>
               <Link href={`/folder/${data.parentId}`}>
                 <ChevronLeft />
                 Back
@@ -47,27 +40,10 @@ const FolderPage = async ({ params }: Props) => {
 
           <div className="flex flex-wrap gap-2">
             <FileUploadForm folderId={id} />
-
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button
-                  size={"sm"}
-                  className="rounded-full"
-                  variant={"secondary"}
-                >
-                  New Folder
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Create a new folder</DialogTitle>
-                </DialogHeader>
-                <CreateFolderForm parentId={id} />
-              </DialogContent>
-            </Dialog>
+            <CreateFolderForm parentId={id} />
           </div>
         </div>
-        <h2 className="text-xl font-bold">{data.title}</h2>
+        <h2 className="text-xl font-bold capitalize">{data.title}</h2>
       </header>
 
       <DropzoneProvider

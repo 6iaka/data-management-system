@@ -109,7 +109,6 @@ export class DriveService {
       });
 
       const folders = response.data.files ?? [];
-      console.log(folders);
       const rootFolder = folders.find(
         (folder) => !folder.parents || folder.parents.length === 0,
       );

@@ -15,3 +15,15 @@ export const formatFileSize = (bytes?: string | number) => {
   const i = parseInt(Math.floor(Math.log(b) / Math.log(1024)).toString());
   return `${(b / Math.pow(1024, i)).toFixed(2)} ${sizes[i]}`;
 };
+
+export const getCategoryFromMimeType = (mimeType: string) => {
+  if (mimeType.startsWith("image/")) return "IMAGE" as const;
+  if (mimeType.startsWith("video/")) return "VIDEO" as const;
+  if (
+    mimeType.startsWith("application/pdf") ||
+    mimeType.includes("document") ||
+    mimeType.includes("sheet")
+  )
+    return "DOCUMENT" as const;
+  return null;
+};

@@ -2,11 +2,19 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
+import { FileCheck, Loader2 } from "lucide-react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import Dropzone, { type DropzoneState } from "shadcn-dropzone";
 import { z } from "zod";
 import { Button } from "~/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "~/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -16,25 +24,17 @@ import {
   FormLabel,
   FormMessage,
 } from "~/components/ui/form";
-import { useToast } from "~/hooks/use-toast";
-import { uploadFile } from "~/server/actions/file_action";
-import { getAllTags } from "~/server/actions/tag_action";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../ui/select";
-import { Textarea } from "../ui/textarea";
-import { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "~/components/ui/dialog";
+} from "~/components/ui/select";
+import { Textarea } from "~/components/ui/textarea";
+import { useToast } from "~/hooks/use-toast";
+import { uploadFile } from "~/server/actions/file_action";
+import { getAllTags } from "~/server/actions/tag_action";
 
 const formSchema = z.object({
   file: z.instanceof(File),
@@ -112,23 +112,27 @@ const FileUploadForm = ({ folderId }: Props) => {
                       }}
                     >
                       {(dropzone: DropzoneState) => (
-                        <div className="flex flex-col items-center p-4">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="#ffff"
-                            viewBox="0 0 24 24"
-                            className="size-10"
-                          >
-                            <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
-                            <g
-                              id="SVGRepo_tracerCarrier"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            ></g>
-                            <g id="SVGRepo_iconCarrier">
-                              <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"></path>
-                            </g>
-                          </svg>
+                        <div className="flex flex-col items-center gap-2 p-4">
+                          {dropzone.acceptedFiles.length > 0 ? (
+                            <FileCheck className="size-10" />
+                          ) : (
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="#ffff"
+                              viewBox="0 0 24 24"
+                              className="size-10"
+                            >
+                              <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
+                              <g
+                                id="SVGRepo_tracerCarrier"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              ></g>
+                              <g id="SVGRepo_iconCarrier">
+                                <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"></path>
+                              </g>
+                            </svg>
+                          )}
 
                           <small className="text-xs">
                             {dropzone.isDragAccept

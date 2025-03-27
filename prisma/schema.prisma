@@ -18,6 +18,12 @@ model Tag {
     updatedAt DateTime @updatedAt
 }
 
+enum Category {
+    IMAGE
+    VIDEO
+    DOCUMENT
+}
+
 model Folder {
     id          Int    @id @default(autoincrement())
     title       String
@@ -42,8 +48,9 @@ model File {
     userClerkId String
     tagName     String?
 
-    folder Folder @relation(fields: [folderId], references: [id], onDelete: Cascade)
-    tag    Tag?   @relation(fields: [tagName], references: [name])
+    folder    Folder   @relation(fields: [folderId], references: [id], onDelete: Cascade)
+    categeory Category
+    tag       Tag?     @relation(fields: [tagName], references: [name])
 
     // Core informations
     googleId    String  @unique

@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import driveService from "../services/drive_service";
 import fileService from "../services/file_service";
 import folderService from "../services/folder_service";
+import { getCategoryFromMimeType } from "~/lib/utils";
 
 export const getFiles = async (folderId: number) => {
   const user = await currentUser();
@@ -82,6 +83,10 @@ export const uploadFile = async (payload: UploadType) => {
     if (!driveFile.id) throw new Error("Failed to retrieve file google data");
     driveFileId = driveFile.id;
 
+    const mimeType = driveFile.mimeType!;
+    const category = getCategoryFromMimeType(mimeType);
+    if (!category) throw new Error("Unrecognized File Type");
+
     const newFile = await fileService.upsert({
       ...(payload.tagName && { tag: { connect: { name: payload.tagName } } }),
       iconLink: driveFile.iconLink!.replace("16", "64"),
@@ -97,6 +102,7 @@ export const uploadFile = async (payload: UploadType) => {
       googleId: driveFile.id,
       title: driveFile.name!,
       userClerkId: user.id,
+      categeory: category,
     });
 
     revalidatePath("/");

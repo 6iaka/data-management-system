@@ -1,18 +1,7 @@
 "use client";
 import type { Folder } from "@prisma/client";
-import { EllipsisVertical, Trash } from "lucide-react";
+import { EllipsisVertical, Loader2, Trash } from "lucide-react";
 import Link from "next/link";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "~/components/ui/alert-dialog";
 import { cn } from "~/lib/utils";
 import { deleteFolder } from "~/server/actions/folder_action";
 import EditFolderForm from "./forms/EditFolderForm";
@@ -24,15 +13,19 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
+import { useTransition } from "react";
 
 type Props = { data: Folder };
 
 const FolderCard = ({ data }: Props) => {
+  const [isPending, startTransition] = useTransition();
+
   return (
     <Link
       href={`/folder/${data.id}`}
       className={cn(
         "group relative flex items-center gap-2.5 rounded-lg bg-card p-2 transition-all hover:bg-secondary/25",
+        isPending && "pointer-events-none opacity-20",
       )}
     >
       <svg
@@ -55,7 +48,9 @@ const FolderCard = ({ data }: Props) => {
       </svg>
 
       <div className="pointer-events-none flex flex-1 select-none flex-col">
-        <h3 className="line-clamp-1 text-sm font-semibold">{data.title}</h3>
+        <h3 className="line-clamp-1 text-sm font-semibold capitalize">
+          {data.title}
+        </h3>
         <p className="line-clamp-1 text-xs font-light">{data.description}</p>
       </div>
 
@@ -65,9 +60,14 @@ const FolderCard = ({ data }: Props) => {
             <Button
               size={"icon"}
               variant={"ghost"}
+              disabled={isPending}
               className="size-6 shrink-0 rounded-full"
             >
-              <EllipsisVertical />
+              {isPending ? (
+                <Loader2 className="animate-spin" />
+              ) : (
+                <EllipsisVertical />
+              )}
             </Button>
           </DropdownMenuTrigger>
 
@@ -78,28 +78,15 @@ const FolderCard = ({ data }: Props) => {
           >
             <EditFolderForm id={data.id} />
 
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                  <Trash /> Delete
-                </DropdownMenuItem>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete
-                    your folder and remove its data from our servers.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => deleteFolder(data.id)}>
-                    Continue
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            <DropdownMenuItem
+              onSelect={() =>
+                startTransition(async () => {
+                  await deleteFolder(data.id);
+                })
+              }
+            >
+              <Trash /> Delete
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       )}

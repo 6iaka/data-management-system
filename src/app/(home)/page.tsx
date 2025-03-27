@@ -1,9 +1,13 @@
 export const dynamic = "force-dynamic";
 import FolderCard from "~/components/FolderCard";
 import SelectionActionBar from "~/components/SelectionActionBar";
-import { getAllFolders } from "~/server/actions/folder_action";
+import {
+  createRootFolder,
+  getAllFolders,
+} from "~/server/actions/folder_action";
 
 const HomePage = async () => {
+  await createRootFolder();
   const folders = await getAllFolders();
 
   return (
