@@ -6,7 +6,7 @@ import { z } from "zod";
 import { Button } from "~/components/ui/button";
 import { Form, FormControl, FormField, FormItem } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
-import { createTag } from "~/server/actions/tag_action";
+import { upsertTag } from "~/server/actions/tag_action";
 
 const formSchema = z.object({
   name: z
@@ -23,7 +23,7 @@ const CreateTagForm = () => {
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    await createTag(values.name);
+    await upsertTag(values.name);
     form.reset();
   };
 

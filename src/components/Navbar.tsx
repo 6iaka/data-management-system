@@ -1,7 +1,7 @@
+import { HelpCircle, LayoutGrid } from "lucide-react";
 import Link from "next/link";
 import SearchInput from "./SearchInput";
 import { Button } from "./ui/button";
-import { HelpCircle, LayoutGrid, Settings } from "lucide-react";
 
 const Navbar = () => {
   return (
@@ -64,10 +64,6 @@ const Navbar = () => {
       <div>
         <Button variant={"ghost"} size={"icon"} className="rounded-full">
           <HelpCircle />
-        </Button>
-
-        <Button variant={"ghost"} size={"icon"} className="rounded-full">
-          <Settings />
         </Button>
 
         <Button variant={"ghost"} size={"icon"} className="rounded-full">

@@ -7,10 +7,10 @@ import fileService from "../services/file_service";
 import folderService from "../services/folder_service";
 
 export const getFiles = async (folderId: number) => {
-  try {
-    const user = await currentUser();
-    if (!user) throw new Error("Not authorized");
+  const user = await currentUser();
 
+  try {
+    if (!user) throw new Error("Not authorized");
     const files = await fileService.findByFolderId(folderId);
 
     revalidatePath("/");
@@ -29,10 +29,10 @@ export const uploadFiles = async ({
   files: File[];
   folderId?: number;
 }) => {
-  try {
-    const user = await currentUser();
-    if (!user) throw new Error("Not authorized");
+  const user = await currentUser();
 
+  try {
+    if (!user) throw new Error("Not authorized");
     const uploadPromise = files.map(async (file) => {
       const uploaded = await uploadFile({ file, folderId });
       return uploaded;
@@ -65,10 +65,10 @@ type UploadType = {
 
 export const uploadFile = async (payload: UploadType) => {
   let driveFileId = "";
-  try {
-    const user = await currentUser();
-    if (!user) throw new Error("Not authorized");
+  const user = await currentUser();
 
+  try {
+    if (!user) throw new Error("Not authorized");
     const folderId = payload.folderId
       ? (await folderService.findById(payload.folderId))?.googleId
       : (await driveService.getRootFolder()).id;
@@ -110,10 +110,10 @@ export const uploadFile = async (payload: UploadType) => {
 };
 
 export const deleteFiles = async (ids: number[]) => {
-  try {
-    const user = await currentUser();
-    if (!user) throw new Error("Not authorized");
+  const user = await currentUser();
 
+  try {
+    if (!user) throw new Error("Not authorized");
     const deletePromise = ids.map(async (id) => {
       return await deleteFile(id);
     });
@@ -129,7 +129,10 @@ export const deleteFiles = async (ids: number[]) => {
 };
 
 export const deleteFile = async (id: number) => {
+  const user = await currentUser();
+
   try {
+    if (!user) throw new Error("Not authorized");
     const deletedFile = await fileService.delete(id);
     await driveService.deleteItem(deletedFile.googleId);
 

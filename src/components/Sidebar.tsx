@@ -1,24 +1,13 @@
-import React from "react";
-import { Button } from "./ui/button";
-import Link from "next/link";
-import { Home, LogOut, Search, Settings } from "lucide-react";
 import { SignOutButton } from "@clerk/nextjs";
+import { LayoutDashboard, LogOut } from "lucide-react";
+import Link from "next/link";
+import { Button } from "./ui/button";
 
 const items = [
   {
-    title: "Home",
+    title: "Dashboard",
     url: "/",
-    icon: Home,
-  },
-  {
-    title: "Search",
-    url: "/search",
-    icon: Search,
-  },
-  {
-    title: "Settings",
-    url: "#",
-    icon: Settings,
+    icon: LayoutDashboard,
   },
 ];
 

@@ -16,13 +16,12 @@ export const getAllFolders = async () => {
 };
 
 export const createRootFolder = async () => {
-  try {
-    const user = await currentUser();
-    if (!user) throw new Error("Not autorized");
+  const user = await currentUser();
 
+  try {
+    if (!user) throw new Error("Not autorized");
     const root = await driveService.getRootFolder();
     if (!root.id) throw new Error("Root folder not found");
-
     const folderExists = await folderService.findByGoogleId(root.id);
     if (folderExists) return folderExists;
 
@@ -45,16 +44,15 @@ export const createNewFolder = async (payload: {
   description?: string;
   parentId?: number;
 }) => {
+  let driveId = "";
   const schema = z.object({
     title: z.string().trim(),
     parentId: z.coerce.number().optional(),
     description: z.string().optional(),
   });
-
-  let driveId = "";
+  const user = await currentUser();
 
   try {
-    const user = await currentUser();
     if (!user) throw new Error("Not authorized");
     const valid = schema.parse(payload);
 
@@ -98,9 +96,9 @@ export const editFolder = async (payload: {
     title: z.string().trim(),
     description: z.string().optional(),
   });
+  const user = await currentUser();
 
   try {
-    const user = await currentUser();
     if (!user) throw new Error("Not authorized");
     const valid = schema.parse(payload);
 
@@ -119,7 +117,10 @@ export const editFolder = async (payload: {
 };
 
 export const deleteFolder = async (id: number) => {
+  const user = await currentUser();
+
   try {
+    if (!user) throw new Error("Not authorized");
     const deletedFolder = await folderService.delete(id);
     await driveService.deleteItem(deletedFolder.googleId);
 
