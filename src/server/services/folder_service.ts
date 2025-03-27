@@ -64,9 +64,9 @@ export class FolderService {
     try {
       const results = await db.$queryRaw`
         SELECT GREATEST(SIMILARITY(title, ${query}), 
-        SIMILARITY('description', ${query})) AS score, "Folder".*
+        SIMILARITY("description", ${query})) AS score, "Folder".*
         FROM "Folder" WHERE SIMILARITY(title, ${query}) > 0.04
-        OR SIMILARITY('description', ${query}) > 0.04
+        OR SIMILARITY("description", ${query}) > 0.04
         ORDER BY score DESC LIMIT 40;`;
 
       return results as Folder[];
