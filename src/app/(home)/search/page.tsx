@@ -1,7 +1,7 @@
 import FileCard from "~/components/FileCard";
 import FolderCard from "~/components/FolderCard";
-import { searchFile } from "~/server/actions/file_action";
-import { searchFolder } from "~/server/actions/folder_action";
+import fileService from "~/server/services/file_service";
+import folderService from "~/server/services/folder_service";
 
 type Props = {
   searchParams: Promise<{ query?: string; tag?: string }>;
@@ -9,8 +9,8 @@ type Props = {
 
 const SearchPage = async ({ searchParams }: Props) => {
   const query = (await searchParams).query;
-  const folders = await searchFolder(query || "");
-  const filesResponse = await searchFile(query || "");
+  const files = await fileService.search(query || "");
+  const folders = await folderService.search(query || "");
 
   return (
     <main className="flex flex-col gap-4 p-4">
@@ -29,21 +29,17 @@ const SearchPage = async ({ searchParams }: Props) => {
         </div>
       </section>
 
-      {filesResponse.success && (
-        <section className="flex flex-col gap-2 rounded-lg">
-          <h3 className="text-balance font-medium">Files</h3>
+      <section className="flex flex-col gap-2 rounded-lg">
+        <h3 className="text-balance font-medium">Files</h3>
 
-          <div className="grid w-full grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-2">
-            {filesResponse.data.length > 0 ? (
-              filesResponse.data.map((item) => (
-                <FileCard data={item} key={item.id} />
-              ))
-            ) : (
-              <p className="text-sm text-muted-foreground">No Files Here</p>
-            )}
-          </div>
-        </section>
-      )}
+        <div className="grid w-full grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] gap-2">
+          {files.length > 0 ? (
+            files.map((item) => <FileCard data={item} key={item.id} />)
+          ) : (
+            <p className="text-sm text-muted-foreground">No Files Here</p>
+          )}
+        </div>
+      </section>
     </main>
   );
 };

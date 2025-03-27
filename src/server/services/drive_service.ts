@@ -1,5 +1,5 @@
 "server only";
-import { google } from "googleapis";
+import { type drive_v3, google } from "googleapis";
 import { Readable } from "stream";
 import { env } from "~/env";
 import { getRootData } from "../actions/drive_action";
@@ -177,6 +177,31 @@ export class DriveService {
   getAllFiles = async () => {
     const folder = await this.drive.files.list();
     return folder.data.files;
+  };
+
+  search = async (query: string) => {
+    try {
+      const response = await this.drive.files.list({
+        q: `(name contains '${query}' or description contains '${query}')`,
+        fields: "files(id, name, description, mimeType)",
+      });
+
+      const files: drive_v3.Schema$File[] = [];
+      const folders: drive_v3.Schema$File[] = [];
+
+      response?.data?.files?.forEach((file) => {
+        if (file.mimeType === "application/vnd.google-apps.folder") {
+          folders.push(file);
+        } else {
+          files.push(file);
+        }
+      });
+
+      return { files, folders };
+    } catch (error) {
+      console.error(error);
+      throw new Error(`Search failed ${(error as Error).message}`);
+    }
   };
 
   /**

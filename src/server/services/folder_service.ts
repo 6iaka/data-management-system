@@ -37,8 +37,8 @@ export class FolderService {
   search = async (query: string) => {
     try {
       const results = await db.$queryRaw`
-        SELECT SIMILARITY(title, ${query}) AS score, "Folder".*
-        FROM "Folder" WHERE SIMILARITY(title, ${query}) > 0.14
+        SELECT GREATEST(SIMILARITY(title, ${query}), SIMILARITY('description', ${query})) AS score, "Folder".*
+        FROM "Folder" WHERE SIMILARITY(title, ${query}) > 0.14 OR SIMILARITY('description', ${query}) > 0.14
         ORDER BY score DESC LIMIT 40;`;
 
       return results as Folder[];
@@ -78,9 +78,7 @@ export class FolderService {
       // Update in database
       const folder = await db.folder.update({
         where: { googleId },
-        data: {
-          parent: { connect: { googleId: newParentId } },
-        },
+        data: { parent: { connect: { googleId: newParentId } } },
       });
 
       return folder;
