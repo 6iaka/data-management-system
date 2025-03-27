@@ -3,13 +3,22 @@
 import { revalidatePath } from "next/cache";
 import tagService from "../services/tag_service";
 
-export const createTag = async (name: string) => {
-  const tag = await tagService.upsert({ name });
-  revalidatePath("/");
-  return tag;
+export const upsertTag = async (name: string) => {
+  try {
+    const tag = await tagService.upsert({ name });
+    revalidatePath("/");
+    return tag;
+  } catch (error) {
+    console.error(error);
+  }
 };
 
 export const getAllTags = async () => {
-  const tag = await tagService.getAll();
-  return tag;
+  try {
+    const tag = await tagService.findMany();
+    revalidatePath("/");
+    return tag;
+  } catch (error) {
+    console.error(error);
+  }
 };

@@ -1,39 +1,65 @@
 "server only";
 import type { Folder, Prisma } from "@prisma/client";
 import { db } from "../db";
-import { DriveService } from "./drive_service";
 
 export class FolderService {
-  private driveService: DriveService;
+  /**
+   * Find Many Folders
+   * @param where Inputs to find the folders by
+   * @returns Array of folders
+   */
+  findMany = async (where?: Prisma.FolderWhereInput) => {
+    try {
+      const folders = await db.folder.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 10,
+        where,
+      });
+      return folders;
+    } catch (error) {
+      throw new Error((error as Error).message);
+    }
+  };
 
-  constructor() {
-    this.driveService = new DriveService();
-  }
-
+  /**
+   * Find folder by ID
+   * @param id ID of the folder to find
+   * @returns folder details
+   */
   findById = async (id: number) => {
-    return await db.folder.findUnique({
-      where: { id },
-      include: {
-        files: true,
-        children: true,
-      },
-    });
+    try {
+      const folder = await db.folder.findUnique({
+        where: { id },
+        include: {
+          files: true,
+          children: true,
+        },
+      });
+      return folder;
+    } catch (error) {
+      throw new Error((error as Error).message);
+    }
   };
 
-  getRootData = async () => {
-    return await db.folder.findFirst({
-      where: { isRoot: true },
-      include: {
-        files: true,
-        children: true,
-      },
-    });
-  };
-
+  /**
+   * Find folder by googleId
+   * @param googleId Google ID of the folder to find
+   * @returns folder details
+   */
   findByGoogleId = async (googleId: string) => {
-    return await db.folder.findUnique({ where: { googleId } });
+    try {
+      const folder = await db.folder.findUnique({ where: { googleId } });
+      return folder;
+    } catch (error) {
+      throw new Error((error as Error).message);
+    }
   };
 
+  /**
+   * Search folders
+   * @param query Query to find the folders by
+   * @returns List of folders
+   */
   search = async (query: string) => {
     try {
       const results = await db.$queryRaw`
@@ -43,47 +69,59 @@ export class FolderService {
 
       return results as Folder[];
     } catch (error) {
-      throw new Error(`Failed to search file: ${(error as Error).message}`);
+      throw new Error((error as Error).message);
     }
   };
 
-  getAll = async () => {
-    return await db.folder.findMany();
-  };
-
-  upsert = async (insertData: Prisma.FolderCreateInput) => {
-    return await db.folder.upsert({
-      where: { googleId: insertData.googleId },
-      create: insertData,
-      update: insertData,
-    });
-  };
-
-  update = async (id: number, updateData: Prisma.FolderUpdateInput) => {
-    return await db.folder.update({ where: { id }, data: updateData });
-  };
-
-  delete = async (id: number) => {
-    return await db.folder.delete({ where: { id } });
-  };
-
   /**
-   * Move a folder
+   * Upsert folder
+   * @param insertData Data for folder creationg
+   * @returns Upserted folder details
    */
-  moveFolder = async (googleId: string, newParentId: string) => {
+  upsert = async (insertData: Prisma.FolderCreateInput) => {
     try {
-      // Move in Drive
-      await this.driveService.moveItem(googleId, newParentId);
-
-      // Update in database
-      const folder = await db.folder.update({
-        where: { googleId },
-        data: { parent: { connect: { googleId: newParentId } } },
+      const folder = await db.folder.upsert({
+        where: { googleId: insertData.googleId },
+        create: insertData,
+        update: insertData,
       });
 
       return folder;
     } catch (error) {
-      throw new Error(`Failed to move folder: ${(error as Error).message}`);
+      throw new Error((error as Error).message);
+    }
+  };
+
+  /**
+   * Update folder
+   * @param id Id of the folder to update
+   * @param updateData Data to be updated
+   * @returns Updated folder details
+   */
+  update = async (id: number, data: Prisma.FolderUpdateInput) => {
+    try {
+      const folder = await db.folder.update({
+        where: { id },
+        data,
+      });
+
+      return folder;
+    } catch (error) {
+      throw new Error((error as Error).message);
+    }
+  };
+
+  /**
+   * Delete folder
+   * @param id ID of the folder to delete
+   * @returns Deleted folder details
+   */
+  delete = async (id: number) => {
+    try {
+      const folder = await db.folder.delete({ where: { id } });
+      return folder;
+    } catch (error) {
+      throw new Error((error as Error).message);
     }
   };
 }

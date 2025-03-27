@@ -1,7 +1,7 @@
 "use client";
 import type { Folder } from "@prisma/client";
-import { Download, Edit, EllipsisVertical, Move, Trash } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { Edit, EllipsisVertical, Trash } from "lucide-react";
+import Link from "next/link";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,7 +17,6 @@ import { cn } from "~/lib/utils";
 import { deleteFolder } from "~/server/actions/folder_action";
 import EditFolderForm from "./forms/EditFolderForm";
 import { Button } from "./ui/button";
-import { Card } from "./ui/card";
 import {
   Dialog,
   DialogContent,
@@ -31,26 +30,24 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
-import { useSelection } from "~/hooks/use-selection";
 
 type Props = { data: Folder };
 
 const FolderCard = ({ data }: Props) => {
-  const router = useRouter();
-  const { toggleSelect, items } = useSelection((state) => state);
-  const isSelected = items.find((item) => item.googleId === data.googleId);
+  // const { toggleSelect, items } = useSelection((state) => state);
+  // const isSelected = items.find((item) => item.googleId === data.googleId);
 
   return (
-    <Card
+    <Link
+      href={`/folder/${data.id}`}
       className={cn(
-        "group relative flex items-center gap-2.5 p-2 transition-all hover:bg-secondary/25",
-        isSelected && "bg-[#2D336B] hover:bg-[#2D336B]",
+        "group relative flex items-center gap-2.5 rounded-lg bg-card p-2 transition-all hover:bg-secondary/25",
+        // isSelected && "bg-[#2D336B] hover:bg-[#2D336B]",
       )}
-      onDoubleClick={() => router.push(`/folder/${data.id}`)}
-      onClick={(e) => {
-        e.stopPropagation();
-        toggleSelect({ googleId: data.googleId, id: data.id, type: "folder" });
-      }}
+      // onClick={(e) => {
+      //   e.stopPropagation();
+      //   toggleSelect({ googleId: data.googleId, id: data.id, type: "folder" });
+      // }}
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -76,70 +73,64 @@ const FolderCard = ({ data }: Props) => {
         <p className="line-clamp-1 text-xs font-light">{data.description}</p>
       </div>
 
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            size={"icon"}
-            variant={"ghost"}
-            className="size-6 shrink-0 rounded-full"
+      {!data.isRoot && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              size={"icon"}
+              variant={"ghost"}
+              className="size-6 shrink-0 rounded-full"
+            >
+              <EllipsisVertical />
+            </Button>
+          </DropdownMenuTrigger>
+
+          <DropdownMenuContent
+            align="start"
+            className="w-44"
+            onClick={(e) => e.stopPropagation()}
           >
-            <EllipsisVertical />
-          </Button>
-        </DropdownMenuTrigger>
+            <Dialog>
+              <DialogTrigger asChild>
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                  <Edit /> Rename
+                </DropdownMenuItem>
+              </DialogTrigger>
 
-        <DropdownMenuContent
-          align="start"
-          className="w-44"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-            <Download /> Download
-          </DropdownMenuItem>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Rename</DialogTitle>
+                </DialogHeader>
+                <EditFolderForm id={data.id} />
+              </DialogContent>
+            </Dialog>
 
-          <Dialog>
-            <DialogTrigger asChild>
-              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                <Edit /> Rename
-              </DropdownMenuItem>
-            </DialogTrigger>
-
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Rename</DialogTitle>
-              </DialogHeader>
-              <EditFolderForm id={data.id} />
-            </DialogContent>
-          </Dialog>
-
-          <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-            <Move /> Move To
-          </DropdownMenuItem>
-
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                <Trash /> Delete
-              </DropdownMenuItem>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This action cannot be undone. This will permanently delete
-                  your folder and remove its data from our servers.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={() => deleteFolder(data.id)}>
-                  Continue
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </Card>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                  <Trash /> Delete
+                </DropdownMenuItem>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete
+                    your folder and remove its data from our servers.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => deleteFolder(data.id)}>
+                    Continue
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+    </Link>
   );
 };
 

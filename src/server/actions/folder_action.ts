@@ -5,14 +5,14 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import driveService from "../services/drive_service";
 import folderService from "../services/folder_service";
-import { getRootData } from "./drive_action";
 
 export const getAllFolders = async () => {
-  return await folderService.getAll();
-};
-
-export const getFolderDetails = async (id: number) => {
-  return await folderService.findById(id);
+  try {
+    const folders = await folderService.findMany();
+    return folders;
+  } catch (error) {
+    console.error(error);
+  }
 };
 
 export const createRootFolder = async () => {
@@ -20,31 +20,23 @@ export const createRootFolder = async () => {
     const user = await currentUser();
     if (!user) throw new Error("Not autorized");
 
-    const root = await getRootData();
-    if (!root) throw new Error("Root folder not found");
+    const root = await driveService.getRootFolder();
+    if (!root.id) throw new Error("Root folder not found");
+
+    const folderExists = await folderService.findByGoogleId(root.id);
+    if (folderExists) return folderExists;
 
     const folder = await folderService.upsert({
       description: "Main folder of the project.",
-      googleId: root.id!,
       userClerkId: user.id,
+      googleId: root.id,
       title: "Root",
       isRoot: true,
     });
 
-    return {
-      success: true,
-      data: folder,
-    } as const;
+    return folder;
   } catch (error) {
-    // Error handling
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error occurred";
-    console.error("Fetch failed failed:", errorMessage);
-
-    return {
-      success: false,
-      error: errorMessage,
-    } as const;
+    console.error(error);
   }
 };
 
@@ -59,38 +51,39 @@ export const createNewFolder = async (payload: {
     description: z.string().optional(),
   });
 
+  let driveId = "";
+
   try {
     const user = await currentUser();
     if (!user) throw new Error("Not authorized");
     const valid = schema.parse(payload);
 
-    const rootFolderId = valid?.parentId
+    const folderId = valid?.parentId
       ? (await folderService.findById(valid?.parentId))?.googleId
-      : undefined;
+      : (await driveService.getRootFolder()).id;
+
+    if (!folderId) throw new Error("Failed to retrieve FolderID");
 
     const driveFolder = await driveService.createFolder({
-      title: valid.title,
-      parentId: rootFolderId,
       description: valid.description,
+      title: valid.title,
+      folderId,
     });
     if (!driveFolder.id) throw new Error("Folder GoogleId not found");
+    driveId = driveFolder.id;
 
-    try {
-      await folderService.upsert({
-        description: valid.description,
-        title: valid.title,
-        googleId: driveFolder.id,
-        userClerkId: user.id,
-        parent: { connect: { googleId: rootFolderId } },
-      });
+    await folderService.upsert({
+      description: valid.description,
+      title: valid.title,
+      googleId: driveFolder.id,
+      userClerkId: user.id,
+      parent: { connect: { googleId: folderId } },
+    });
 
-      revalidatePath("/");
-      revalidatePath("/folder/:id", "page");
-    } catch (error) {
-      await driveService.deleteItem(driveFolder.id);
-      console.error(error);
-    }
+    revalidatePath("/");
+    revalidatePath("/folder/:id", "page");
   } catch (error) {
+    await driveService.deleteItem(driveId);
     console.error(error);
   }
 };
@@ -126,12 +119,22 @@ export const editFolder = async (payload: {
 };
 
 export const deleteFolder = async (id: number) => {
-  const deleted = await folderService.delete(id);
-  await driveService.deleteItem(deleted.googleId);
-  revalidatePath("/");
-  revalidatePath("/folder/:id", "page");
+  try {
+    const deletedFolder = await folderService.delete(id);
+    await driveService.deleteItem(deletedFolder.googleId);
+
+    revalidatePath("/");
+    revalidatePath("/folder/:id", "page");
+  } catch (error) {
+    console.error(error);
+  }
 };
 
 export const searchFolder = async (query: string) => {
-  return await folderService.search(query);
+  try {
+    const results = await folderService.search(query);
+    return results;
+  } catch (error) {
+    console.error(error);
+  }
 };

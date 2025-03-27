@@ -1,8 +1,7 @@
 "server only";
-import { type drive_v3, google } from "googleapis";
+import { google } from "googleapis";
 import { Readable } from "stream";
 import { env } from "~/env";
-import { getRootData } from "../actions/drive_action";
 
 export class DriveService {
   private auth = new google.auth.GoogleAuth({
@@ -31,7 +30,7 @@ export class DriveService {
     description,
   }: {
     file: File;
-    folderId?: string;
+    folderId: string;
     description?: string;
   }) => {
     try {
@@ -41,11 +40,9 @@ export class DriveService {
       const buffer = Buffer.from(arrayBuffer);
       const stream = Readable.from(buffer);
 
-      const parentId = folderId || (await getRootData())?.id || "root";
-
       const response = await this.drive.files.create({
         requestBody: {
-          parents: [parentId],
+          parents: [folderId],
           description: description,
           mimeType: file.type,
           name: file.name,
@@ -69,182 +66,91 @@ export class DriveService {
 
       return response.data;
     } catch (error) {
-      console.error("Error uploading file:", error);
-      throw new Error("Failed to upload file");
+      console.error(error);
+      throw new Error((error as Error).message);
     }
   };
 
+  /**
+   * Create a folder
+   * @param payload New folder details
+   * @returns Created folder details
+   */
   createFolder = async (payload: {
     title: string;
-    parentId?: string;
+    folderId: string;
     description?: string;
   }) => {
     try {
       const response = await this.drive.files.create({
         requestBody: {
           name: payload.title,
-          parents: [payload.parentId || "root"],
+          parents: [payload.folderId],
           mimeType: "application/vnd.google-apps.folder",
           description: payload.description,
         },
       });
-
       return response.data;
     } catch (error) {
-      console.error("Error creating folder:", error);
-      throw new Error("Failed to create folder");
+      console.error(error);
+      throw new Error((error as Error).message);
     }
   };
 
+  /**
+   * Get Root Folder from Google Drive
+   * @returns Root folder details
+   */
   getRootFolder = async () => {
     try {
       const response = await this.drive.files.list({
         q: "mimeType = 'application/vnd.google-apps.folder'",
-        fields: "*",
       });
 
       const folders = response.data.files ?? [];
-
       const rootFolder = folders.find(
         (folder) => !folder.parents || folder.parents.length === 0,
       );
-
-      if (!rootFolder) return null;
+      if (!rootFolder) throw new Error("Root folder not found");
 
       return rootFolder;
     } catch (error) {
-      console.error("Error getting root folders:", error);
-      return null;
-    }
-  };
-
-  getFolderContent = async (folderId: string) => {
-    const response = await this.drive.files.list({
-      q: `'${folderId}' in parents`,
-    });
-    const data = response.data.files ?? [];
-
-    const contents = {
-      folders: data.filter(
-        (item) => item.mimeType === "application/vnd.google-apps.folder",
-      ),
-      files: data.filter(
-        (item) => item.mimeType !== "application/vnd.google-apps.folder",
-      ),
-    };
-
-    return contents;
-  };
-
-  getFolderDetails = async (id: string) => {
-    const response = await this.drive.files.get({ fileId: id });
-    const folder = response.data;
-
-    if (!folder.id) return null;
-
-    const parents = await this.getFolderPath(folder.id);
-    const contents = await this.getFolderContent(folder.id);
-
-    return { folder, parents, contents };
-  };
-
-  getFolderPath = async (folderId: string) => {
-    const path: { id: string; title: string }[] = [];
-    let currentId = folderId;
-
-    while (currentId) {
-      try {
-        const folder = await this.drive.files.get({
-          fileId: currentId,
-          fields: "parents,title",
-        });
-
-        const title = folder.data.name;
-        const parentId = folder.data.parents?.[0];
-        if (!parentId) break;
-
-        path.unshift({ id: currentId, title: title ?? "Unknown" });
-        currentId = parentId;
-      } catch (error) {
-        console.error("Error getting folder:", error);
-        break;
-      }
-    }
-
-    return path;
-  };
-
-  getAllFiles = async () => {
-    const folder = await this.drive.files.list();
-    return folder.data.files;
-  };
-
-  search = async (query: string) => {
-    try {
-      const response = await this.drive.files.list({
-        q: `(name contains '${query}' or description contains '${query}')`,
-        fields: "files(id, name, description, mimeType)",
-      });
-
-      const files: drive_v3.Schema$File[] = [];
-      const folders: drive_v3.Schema$File[] = [];
-
-      response?.data?.files?.forEach((file) => {
-        if (file.mimeType === "application/vnd.google-apps.folder") {
-          folders.push(file);
-        } else {
-          files.push(file);
-        }
-      });
-
-      return { files, folders };
-    } catch (error) {
       console.error(error);
-      throw new Error(`Search failed ${(error as Error).message}`);
+      throw new Error((error as Error).message);
     }
   };
 
   /**
-   * Move a file or folder
+   * Rename Item
+   * @param itemId ID of the item to be renamed
+   * @param newName New name for the item
+   * @returns Updated item details
    */
-  moveItem = async (fileId: string, newParentId: string) => {
-    try {
-      const response = await this.drive.files.update({
-        removeParents: "root",
-        addParents: newParentId,
-        fileId,
-      });
-
-      return response.data;
-    } catch (error) {
-      throw new Error(`Failed to move item: ${(error as Error).message}`);
-    }
-  };
-
-  /**
-   * Rename a file or folder
-   */
-  renameItem = async (fileId: string, newName: string) => {
+  renameItem = async (itemId: string, newName: string) => {
     try {
       const response = await this.drive.files.update({
         requestBody: { name: newName },
-        fileId,
+        fileId: itemId,
       });
       return response.data;
     } catch (error) {
-      throw new Error(`Failed to rename item: ${(error as Error).message}`);
+      console.error(error);
+      throw new Error((error as Error).message);
     }
   };
 
   /**
-   * Delete a file or folder
+   *
+   * @param itemId ID of the item to deleete
+   * @returns True if item was deleted or error
    */
-  deleteItem = async (fileId: string) => {
+  deleteItem = async (itemId: string) => {
     try {
-      await this.drive.files.delete({ fileId });
+      await this.drive.files.delete({ fileId: itemId });
       return true;
     } catch (error) {
-      throw new Error(`Failed to delete item: ${(error as Error).message}`);
+      console.error(error);
+      throw new Error((error as Error).message);
     }
   };
 }

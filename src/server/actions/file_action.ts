@@ -1,7 +1,6 @@
 "use server";
 
 import { currentUser } from "@clerk/nextjs/server";
-import type { File as FileData } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import driveService from "../services/drive_service";
 import fileService from "../services/file_service";
@@ -12,22 +11,14 @@ export const getFiles = async (folderId: number) => {
     const user = await currentUser();
     if (!user) throw new Error("Not authorized");
 
-    const files = await fileService.getFilesByFolder(folderId);
+    const files = await fileService.findByFolderId(folderId);
 
     revalidatePath("/");
     revalidatePath("/folder/:id", "page");
 
-    return { success: true, data: files } as const;
+    return files;
   } catch (error) {
-    // Error handling
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error occurred";
-    console.error("Fetch failed failed:", errorMessage);
-
-    return {
-      success: false,
-      error: errorMessage,
-    } as const;
+    console.error((error as Error).message);
   }
 };
 
@@ -36,16 +27,17 @@ export const uploadFiles = async ({
   folderId,
 }: {
   files: File[];
-  folderId?: number | null;
+  folderId?: number;
 }) => {
   try {
     const user = await currentUser();
     if (!user) throw new Error("Not authorized");
 
     const uploadPromise = files.map(async (file) => {
-      const uploaded = uploadFile({ file, folderId });
+      const uploaded = await uploadFile({ file, folderId });
       return uploaded;
     });
+
     const upload = await Promise.allSettled(uploadPromise);
     const results = upload.map((item) => {
       if (item.status === "rejected") {
@@ -58,88 +50,62 @@ export const uploadFiles = async ({
     revalidatePath("/");
     revalidatePath("/folder/:id", "page");
 
-    return { success: true, data: results };
+    return results;
   } catch (error) {
-    // Error handling
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error occurred";
-    console.error("File upload failed:", errorMessage);
-
-    return {
-      success: false,
-      error: errorMessage,
-    };
+    console.error((error as Error).message);
   }
 };
 
-export const uploadFile = async ({
-  file,
-  folderId,
-  tagName,
-  description,
-}: {
+type UploadType = {
   file: File;
   folderId?: number | null;
   tagName?: string;
   description?: string;
-}): Promise<ApiResponse<FileData>> => {
-  let driveFileId = "";
+};
 
+export const uploadFile = async (payload: UploadType) => {
+  let driveFileId = "";
   try {
     const user = await currentUser();
     if (!user) throw new Error("Not authorized");
 
-    const rootFolderId = folderId
-      ? (await folderService.findById(folderId))?.googleId
-      : undefined;
+    const folderId = payload.folderId
+      ? (await folderService.findById(payload.folderId))?.googleId
+      : (await driveService.getRootFolder()).id;
+    if (!folderId) throw new Error("Failed to retrieve folderId");
 
     const driveFile = await driveService.uploadFile({
-      folderId: rootFolderId,
-      description,
-      file,
+      description: payload.description,
+      file: payload.file,
+      folderId,
     });
-    driveFileId = driveFile.id!;
+    if (!driveFile.id) throw new Error("Failed to retrieve file google data");
+    driveFileId = driveFile.id;
 
-    const newFile = await fileService.upsertFile({
-      ...(tagName && { tag: { connect: { name: tagName } } }),
+    const newFile = await fileService.upsert({
+      ...(payload.tagName && { tag: { connect: { name: payload.tagName } } }),
       iconLink: driveFile.iconLink!.replace("16", "64"),
-      folder: { connect: { googleId: rootFolderId } },
+      folder: { connect: { googleId: folderId } },
       originalFilename: driveFile.originalFilename!,
       webContentLink: driveFile.webContentLink!,
       fileExtension: driveFile.fileExtension!,
       thumbnailLink: driveFile.thumbnailLink,
       webViewLink: driveFile.webViewLink!,
       fileSize: Number(driveFile.size),
+      description: payload.description,
       mimeType: driveFile.mimeType!,
+      googleId: driveFile.id,
       title: driveFile.name!,
-      googleId: driveFile.id!,
       userClerkId: user.id,
-      description,
     });
 
     revalidatePath("/");
     revalidatePath("/folder/:id", "page");
 
-    return { success: true, data: newFile };
+    return newFile;
   } catch (error) {
-    // Drive clean up
-    if (driveFileId) {
-      try {
-        await driveService.deleteItem(driveFileId);
-      } catch (deleteError) {
-        console.error("Failed to cleanup drive file:", deleteError);
-      }
-    }
-
-    // Error handling
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error occurred";
-    console.error("File upload failed:", errorMessage);
-
-    return {
-      success: false,
-      error: errorMessage,
-    };
+    await driveService.deleteItem(driveFileId);
+    console.error((error as Error).message);
   }
 };
 
@@ -149,65 +115,34 @@ export const deleteFiles = async (ids: number[]) => {
     if (!user) throw new Error("Not authorized");
 
     const deletePromise = ids.map(async (id) => {
-      const deleted = deleteFile(id);
-      return deleted;
+      return await deleteFile(id);
     });
     const deleted = await Promise.allSettled(deletePromise);
-    const results = deleted.map((item) => {
-      if (item.status === "rejected") {
-        return { success: false, error: item.reason as string };
-      } else {
-        if (item.value.success) {
-          return { success: false, data: item.value.data };
-        } else {
-          return { success: false, data: item.value.error };
-        }
-      }
-    });
 
     revalidatePath("/");
     revalidatePath("/folder/:id", "page");
 
+    return deleted;
+  } catch (error) {
+    console.error((error as Error).message);
+  }
+};
+
+export const deleteFile = async (id: number) => {
+  try {
+    const deletedFile = await fileService.delete(id);
+    await driveService.deleteItem(deletedFile.googleId);
+    return deletedFile;
+  } catch (error) {
+    console.error((error as Error).message);
+  }
+};
+
+export const searchFile = async (query: string) => {
+  try {
+    const results = await fileService.search(query);
     return results;
   } catch (error) {
-    // Error handling
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error occurred";
-    console.error("File upload failed:", errorMessage);
-
-    return { success: false, error: errorMessage } as const;
-  }
-};
-
-export const deleteFile = async (
-  id: number,
-): Promise<ApiResponse<FileData>> => {
-  try {
-    const deletedFile = await fileService.deleteFile(id);
-    await driveService.deleteItem(deletedFile.googleId);
-
-    return { success: true, data: deletedFile };
-  } catch (error) {
-    // Error handling
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error occurred";
-    console.error("File upload failed:", errorMessage);
-
-    return { success: false, error: errorMessage };
-  }
-};
-
-export const searchFile = async (
-  query: string,
-): Promise<ApiResponse<FileData[]>> => {
-  try {
-    const results = await fileService.searchFile(query);
-    return { success: true, data: results };
-  } catch (error) {
-    // Error handling
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error occurred";
-    console.error("File upload failed:", errorMessage);
-    return { success: false, error: errorMessage };
+    console.error((error as Error).message);
   }
 };

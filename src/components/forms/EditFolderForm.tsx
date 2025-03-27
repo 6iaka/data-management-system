@@ -56,7 +56,7 @@ const EditFolderForm = ({ id }: Props) => {
 
         <Button type="submit" disabled={form.formState.isSubmitting}>
           {form.formState.isSubmitting && <Loader2 className="animate-spin" />}
-          Create
+          Rename
         </Button>
       </form>
     </Form>

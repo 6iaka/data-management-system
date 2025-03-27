@@ -1,7 +1,8 @@
 import React from "react";
 import { Button } from "./ui/button";
 import Link from "next/link";
-import { Home, Search, Settings } from "lucide-react";
+import { Home, LogOut, Search, Settings } from "lucide-react";
+import { SignOutButton } from "@clerk/nextjs";
 
 const items = [
   {
@@ -38,6 +39,17 @@ const Sidebar = () => {
           </Link>
         </Button>
       ))}
+
+      <SignOutButton>
+        <Button
+          size={"sm"}
+          variant={"ghost"}
+          className="justify-start rounded-full"
+        >
+          <LogOut />
+          <span>Logout</span>
+        </Button>
+      </SignOutButton>
     </div>
   );
 };
