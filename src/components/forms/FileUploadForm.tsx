@@ -66,16 +66,13 @@ const FileUploadForm = ({ folderId }: Props) => {
       folderId,
     });
 
-    if (!response.success) {
+    if (!response) {
       toast({
         title: "Error",
-        description: response.error,
+        variant: "destructive",
       });
     } else {
-      toast({
-        title: "Success",
-        description: `File uploaded GoogleID: ${response.data.googleId}`,
-      });
+      toast({ title: "Success" });
       form.reset();
       setIsOpen(false);
     }

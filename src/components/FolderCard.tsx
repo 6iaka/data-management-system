@@ -34,20 +34,12 @@ import {
 type Props = { data: Folder };
 
 const FolderCard = ({ data }: Props) => {
-  // const { toggleSelect, items } = useSelection((state) => state);
-  // const isSelected = items.find((item) => item.googleId === data.googleId);
-
   return (
     <Link
       href={`/folder/${data.id}`}
       className={cn(
         "group relative flex items-center gap-2.5 rounded-lg bg-card p-2 transition-all hover:bg-secondary/25",
-        // isSelected && "bg-[#2D336B] hover:bg-[#2D336B]",
       )}
-      // onClick={(e) => {
-      //   e.stopPropagation();
-      //   toggleSelect({ googleId: data.googleId, id: data.id, type: "folder" });
-      // }}
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
