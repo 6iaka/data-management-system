@@ -1,5 +1,5 @@
 "server only";
-import { google } from "googleapis";
+import { type drive_v3, google } from "googleapis";
 import { Readable } from "stream";
 import { env } from "~/env";
 
@@ -28,11 +28,37 @@ export class DriveService {
       const rootId = (await this.getRootFolder()).id;
       if (!rootId) throw new Error("Failed to retrieve root folder");
 
+      const allFiles: drive_v3.Schema$File[] = [];
+      await this.fetchFiles(rootId, allFiles);
+
+      return allFiles;
+    } catch (error) {
+      console.error(error);
+      throw new Error((error as Error).message);
+    }
+  };
+
+  /**
+   * Get Files recursively
+   * @param folderId ID of the folder to get the content of
+   * @param allFiles list of files to add the results to
+   */
+  fetchFiles = async (folderId: string, allFiles: drive_v3.Schema$File[]) => {
+    try {
       const response = await this.drive.files.list({
+        q: `'${folderId}' in parents and trashed=false`,
+        pageSize: 1000,
         fields: "*",
-        q: `'${rootId}' in parents`,
       });
-      return response.data.files;
+
+      const files = response.data.files || [];
+      allFiles.push(...files);
+
+      for (const file of files) {
+        if (file.mimeType === "application/vnd.google-apps.folder") {
+          await this.fetchFiles(file.id!, allFiles); // Recursively fetch subfolder contents
+        }
+      }
     } catch (error) {
       console.error(error);
       throw new Error((error as Error).message);

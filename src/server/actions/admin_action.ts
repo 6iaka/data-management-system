@@ -20,38 +20,42 @@ export const syncDrive = async () => {
     await Promise.allSettled(
       items.map((item) =>
         limit(async () => {
-          const isFolder =
-            item.mimeType === "application/vnd.google-apps.folder";
+          try {
+            const isFolder =
+              item.mimeType === "application/vnd.google-apps.folder";
 
-          if (isFolder) {
-            return await folderService.upsert({
-              parent: { connect: { googleId: item.parents![0]! } },
-              description: item.description,
-              userClerkId: user.id,
-              googleId: item.id!,
-              title: item.name!,
-            });
-          } else {
-            const mimeType = item.mimeType!;
-            const category = getCategoryFromMimeType(mimeType);
-            if (!category) throw new Error("Unrecognized File Type");
+            if (isFolder) {
+              return await folderService.upsert({
+                parent: { connect: { googleId: item.parents![0]! } },
+                description: item.description,
+                userClerkId: user.id,
+                googleId: item.id!,
+                title: item.name!,
+              });
+            } else {
+              const mimeType = item.mimeType!;
+              const category = getCategoryFromMimeType(mimeType);
+              if (!category) throw new Error("Unrecognized File Type");
 
-            return await fileService.upsert({
-              folder: { connect: { googleId: item.parents![0]! } },
-              iconLink: item.iconLink!.replace("16", "64"),
-              originalFilename: item.originalFilename!,
-              webContentLink: item.webContentLink!,
-              fileExtension: item.fileExtension!,
-              thumbnailLink: item.thumbnailLink,
-              webViewLink: item.webViewLink!,
-              description: item.description,
-              fileSize: Number(item.size),
-              mimeType: item.mimeType!,
-              userClerkId: user.id,
-              categeory: category,
-              googleId: item.id!,
-              title: item.name!,
-            });
+              return await fileService.upsert({
+                folder: { connect: { googleId: item.parents![0]! } },
+                iconLink: item.iconLink!.replace("16", "64"),
+                originalFilename: item.originalFilename!,
+                webContentLink: item.webContentLink!,
+                fileExtension: item.fileExtension!,
+                thumbnailLink: item.thumbnailLink,
+                webViewLink: item.webViewLink!,
+                description: item.description,
+                fileSize: Number(item.size),
+                mimeType: item.mimeType!,
+                userClerkId: user.id,
+                categeory: category,
+                googleId: item.id!,
+                title: item.name!,
+              });
+            }
+          } catch (error) {
+            console.error(error);
           }
         }),
       ),
