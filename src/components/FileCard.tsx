@@ -1,7 +1,9 @@
 "use client";
 import type { File as FileData } from "@prisma/client";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { EllipsisVertical, Loader2 } from "lucide-react";
 import Image from "next/image";
+import { useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,26 +15,20 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "~/components/ui/alert-dialog";
-import { Card } from "~/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
-import { useSelection } from "~/hooks/use-selection";
 import { cn, formatFileSize } from "~/lib/utils";
 import { deleteFile } from "~/server/actions/file_action";
 import { Button } from "./ui/button";
-import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 type Props = { data: FileData };
 
 const FileCard = ({ data }: Props) => {
   const queryClient = useQueryClient();
-  const { toggleSelect, items } = useSelection((state) => state);
-  const isSelected = items.find((item) => item.googleId === data.googleId);
   const [isOpen, setIsOpen] = useState(false);
 
   const { mutate, isPending } = useMutation({
@@ -44,17 +40,13 @@ const FileCard = ({ data }: Props) => {
   });
 
   return (
-    <Card
+    <a
+      href={data.webViewLink}
       className={cn(
-        "group relative flex flex-col items-center justify-center gap-2.5 p-4 transition-all hover:bg-secondary/25",
-        isSelected && "bg-[#2D336B] hover:bg-[#2D336B]",
+        "group relative flex flex-col items-center justify-center gap-2.5 rounded-lg bg-card p-4 transition-all hover:bg-secondary/25",
         isPending && "pointer-events-none opacity-20",
       )}
       onDoubleClick={() => (window.location.href = data.webViewLink)}
-      onClick={(e) => {
-        e.stopPropagation();
-        toggleSelect({ googleId: data.googleId, id: data.id, type: "file" });
-      }}
     >
       <DropdownMenu defaultOpen={isOpen} onOpenChange={setIsOpen} open={isOpen}>
         <DropdownMenuTrigger asChild>
@@ -127,7 +119,7 @@ const FileCard = ({ data }: Props) => {
           {formatFileSize(data.fileSize)}
         </small>
       </div>
-    </Card>
+    </a>
   );
 };
 

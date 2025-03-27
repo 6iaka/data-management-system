@@ -3,7 +3,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import DropzoneProvider from "~/components/DropzoneProvider";
 import FileCard from "~/components/FileCard";
-import FileUploadProgress from "~/components/FileUploadProgress";
 import FolderCard from "~/components/FolderCard";
 import SelectionActionBar from "~/components/SelectionActionBar";
 import CreateFolderForm from "~/components/forms/CreateFolderForm";
@@ -98,8 +97,6 @@ const FolderPage = async ({ params }: Props) => {
             )}
           </div>
         </section>
-
-        <FileUploadProgress />
       </DropzoneProvider>
     </>
   );
