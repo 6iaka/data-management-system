@@ -15,6 +15,15 @@ export const getAllFolders = async () => {
   }
 };
 
+export const findFolderById = async (id: number) => {
+  try {
+    const folders = await folderService.findById(id);
+    return folders;
+  } catch (error) {
+    console.error(error);
+  }
+};
+
 export const createRootFolder = async () => {
   const user = await currentUser();
 

@@ -1,7 +1,6 @@
 "use client";
 import { useMutation } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
-import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { useDropzone } from "react-dropzone";
 import { useToast } from "~/hooks/use-toast";
@@ -11,20 +10,21 @@ import { uploadFiles } from "~/server/actions/file_action";
 const DropzoneProvider = ({
   children,
   className,
+  folderId,
 }: {
   children: ReactNode;
   className?: string;
+  folderId: number;
 }) => {
   const { toast } = useToast();
   const [files, setFiles] = useState<File[]>([]);
-  const pathname = usePathname();
 
   const { mutate, isSuccess, isPending } = useMutation({
     mutationKey: ["uploadFiles"],
     mutationFn: async (payload: File[]) =>
       await uploadFiles({
         files: payload,
-        folderId: Number(/folder\/(\d+)/.exec(pathname)?.[1]),
+        folderId,
       }),
   });
 

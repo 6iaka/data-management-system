@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import FolderCard from "~/components/FolderCard";
 import SelectionActionBar from "~/components/SelectionActionBar";
 import { getAllFolders } from "~/server/actions/folder_action";

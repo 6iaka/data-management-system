@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 import DropzoneProvider from "~/components/DropzoneProvider";
 import FileCard from "~/components/FileCard";
 import FolderCard from "~/components/FolderCard";
-import SelectionActionBar from "~/components/SelectionActionBar";
 import CreateFolderForm from "~/components/forms/CreateFolderForm";
 import FileUploadForm from "~/components/forms/FileUploadForm";
 import { Button } from "~/components/ui/button";
@@ -15,7 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "~/components/ui/dialog";
-import folderService from "~/server/services/folder_service";
+import { findFolderById } from "~/server/actions/folder_action";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -23,7 +22,7 @@ const FolderPage = async ({ params }: Props) => {
   const id = Number((await params).id);
   if (isNaN(id)) notFound();
 
-  const data = await folderService.findById(id);
+  const data = await findFolderById(id);
   if (!data) notFound();
 
   return (
@@ -69,10 +68,12 @@ const FolderPage = async ({ params }: Props) => {
           </div>
         </div>
         <h2 className="text-xl font-bold">{data.title}</h2>
-        <SelectionActionBar folderId={id} />
       </header>
 
-      <DropzoneProvider className="flex h-full flex-1 flex-col gap-4 overflow-y-auto p-4">
+      <DropzoneProvider
+        folderId={id}
+        className="flex h-full flex-1 flex-col gap-4 overflow-y-auto p-4"
+      >
         <section className="flex flex-col gap-2 rounded-lg">
           <h3 className="text-balance font-medium">Folders</h3>
           <div className="grid w-full grid-cols-[repeat(auto-fill,minmax(14rem,1fr))] gap-2">
