@@ -1,6 +1,6 @@
 "use client";
 import type { File as FileData } from "@prisma/client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { EllipsisVertical, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
@@ -28,15 +28,10 @@ import { Button } from "./ui/button";
 type Props = { data: FileData };
 
 const FileCard = ({ data }: Props) => {
-  const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
 
   const { mutate, isPending } = useMutation({
     mutationFn: async () => await deleteFile(data.id),
-    onSettled: async () =>
-      await queryClient.invalidateQueries({
-        queryKey: ["getFiles", data.folderId],
-      }),
   });
 
   return (

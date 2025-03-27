@@ -132,6 +132,10 @@ export const deleteFile = async (id: number) => {
   try {
     const deletedFile = await fileService.delete(id);
     await driveService.deleteItem(deletedFile.googleId);
+
+    revalidatePath("/");
+    revalidatePath("/folder/:id", "page");
+
     return deletedFile;
   } catch (error) {
     console.error((error as Error).message);
