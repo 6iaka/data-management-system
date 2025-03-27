@@ -1,6 +1,6 @@
 "use client";
 import type { Folder } from "@prisma/client";
-import { Edit, EllipsisVertical, Trash } from "lucide-react";
+import { EllipsisVertical, Trash } from "lucide-react";
 import Link from "next/link";
 import {
   AlertDialog,
@@ -17,13 +17,7 @@ import { cn } from "~/lib/utils";
 import { deleteFolder } from "~/server/actions/folder_action";
 import EditFolderForm from "./forms/EditFolderForm";
 import { Button } from "./ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "./ui/dialog";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -82,20 +76,7 @@ const FolderCard = ({ data }: Props) => {
             className="w-44"
             onClick={(e) => e.stopPropagation()}
           >
-            <Dialog>
-              <DialogTrigger asChild>
-                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                  <Edit /> Rename
-                </DropdownMenuItem>
-              </DialogTrigger>
-
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Rename</DialogTitle>
-                </DialogHeader>
-                <EditFolderForm id={data.id} />
-              </DialogContent>
-            </Dialog>
+            <EditFolderForm id={data.id} />
 
             <AlertDialog>
               <AlertDialogTrigger asChild>
