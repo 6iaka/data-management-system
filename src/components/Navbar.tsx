@@ -3,6 +3,7 @@ import Link from "next/link";
 import SearchInput from "./SearchInput";
 import { Button } from "./ui/button";
 import CreateTagForm from "./forms/CreateTagForm";
+import { Suspense } from "react";
 
 const Navbar = () => {
   return (
@@ -59,7 +60,9 @@ const Navbar = () => {
       </Link>
 
       <div className="max-w-lg flex-1">
-        <SearchInput />
+        <Suspense>
+          <SearchInput />
+        </Suspense>
       </div>
 
       <div className="flex items-center justify-center gap-2">
