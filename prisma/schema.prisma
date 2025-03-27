@@ -20,7 +20,7 @@ model Tag {
 
 model Folder {
     id          Int    @id @default(autoincrement())
-    title       String @unique
+    title       String
     googleId    String @unique
     userClerkId String
 

@@ -31,6 +31,7 @@ export const createRootFolder = async () => {
     if (!user) throw new Error("Not autorized");
     const root = await driveService.getRootFolder();
     if (!root.id) throw new Error("Root folder not found");
+
     const folderExists = await folderService.findByGoogleId(root.id);
     if (folderExists) return folderExists;
 
@@ -54,37 +55,31 @@ export const createNewFolder = async (payload: {
   parentId?: number;
 }) => {
   let driveId = "";
-  const schema = z.object({
-    title: z.string().trim(),
-    parentId: z.coerce.number().optional(),
-    description: z.string().optional(),
-  });
   const user = await currentUser();
 
   try {
     if (!user) throw new Error("Not authorized");
-    const valid = schema.parse(payload);
 
-    const folderId = valid?.parentId
-      ? (await folderService.findById(valid?.parentId))?.googleId
+    const folderId = payload?.parentId
+      ? (await folderService.findById(payload.parentId))?.googleId
       : (await driveService.getRootFolder()).id;
 
     if (!folderId) throw new Error("Failed to retrieve FolderID");
 
     const driveFolder = await driveService.createFolder({
-      description: valid.description,
-      title: valid.title,
+      description: payload.description,
+      title: payload.title,
       folderId,
     });
     if (!driveFolder.id) throw new Error("Folder GoogleId not found");
     driveId = driveFolder.id;
 
     await folderService.upsert({
-      description: valid.description,
-      title: valid.title,
-      googleId: driveFolder.id,
-      userClerkId: user.id,
       parent: { connect: { googleId: folderId } },
+      description: payload.description,
+      googleId: driveFolder.id,
+      title: payload.title,
+      userClerkId: user.id,
     });
 
     revalidatePath("/");

@@ -105,9 +105,11 @@ export class DriveService {
     try {
       const response = await this.drive.files.list({
         q: "mimeType = 'application/vnd.google-apps.folder'",
+        fields: "*",
       });
 
       const folders = response.data.files ?? [];
+      console.log(folders);
       const rootFolder = folders.find(
         (folder) => !folder.parents || folder.parents.length === 0,
       );
