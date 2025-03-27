@@ -20,6 +20,26 @@ export class DriveService {
   private drive = google.drive({ version: "v3", auth: this.auth });
 
   /**
+   * Get all google drive files
+   * @returns All files and documents in google drive
+   */
+  getAllItems = async () => {
+    try {
+      const rootId = (await this.getRootFolder()).id;
+      if (!rootId) throw new Error("Failed to retrieve root folder");
+
+      const response = await this.drive.files.list({
+        fields: "*",
+        q: `'${rootId}' in parents`,
+      });
+      return response.data.files;
+    } catch (error) {
+      console.error(error);
+      throw new Error((error as Error).message);
+    }
+  };
+
+  /**
    * Upload a file to Google Drive
    * @param params Upload parameters including file data and metadata
    * @returns Uploaded file metadata
